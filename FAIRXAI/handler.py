@@ -8,13 +8,13 @@ class Handler():
     Abstract class for xai methodology handler
     """
     @abstractmethod
-    def set_compatible_dataset(self):
+    def compatible_dataset(self):
         """
-        it sets the compatible dataset types for the xai method handled: 
-        Feature Importance | Rules-CounterRules | Examples-CounterExamples
+        it access object properties and return the compatible dataset types for the xai method handled: Tabular | Image | Text | Timeseries
         """
 
-    def set_explanation_type(self):
+    def explanation_type(self):
         """
-        it sets the explanation types created by the xai method handled
+        it access object properties and return  the explanation types created by the xai method handled:
+        Feature Importance | Rules-CounterRules | Examples-CounterExamples
         """
