@@ -4,7 +4,6 @@ setup(
     name="FAIRXAI",
     version="0.1",
     author="Paolo Cintia",
-    author_email="your.email@example.com",
     description="FAIRXAI is a platform developed within the Future Artificial Intelligence in Research (FAIR) initiative, designed to support the composition, execution, and explanation of modular AI decision-making processes.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
