@@ -1,8 +1,5 @@
 from abc import abstractmethod
 
-
-
-
 class Handler():
     """
     Abstract class for xai methodology handler

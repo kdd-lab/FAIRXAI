@@ -1,0 +1,29 @@
+﻿fairxai.handler
+===============
+
+.. automodule:: fairxai.handler
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Handler
+   
+   
+
+   
+   
+   
+
+
+

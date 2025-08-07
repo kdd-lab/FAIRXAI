@@ -1,8 +1,5 @@
 from abc import abstractmethod
 
-
-
-
 class Dataset():
     """
     Abstract class for datasets

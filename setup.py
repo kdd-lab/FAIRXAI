@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="FAIRXAI",
+    name="fairxai",
     version="0.1",
     author="Paolo Cintia",
-    description="FAIRXAI is a platform developed within the Future Artificial Intelligence in Research (FAIR) initiative, designed to support the composition, execution, and explanation of modular AI decision-making processes.",
+    description="fairxai is a platform developed within the Future Artificial Intelligence in Research (FAIR) initiative, designed to support the composition, execution, and explanation of modular AI decision-making processes.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/kdd-lab/FAIRXAI",
