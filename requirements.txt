@@ -13,3 +13,6 @@ git+https://github.com/msetzu/glocalx.git@main
 git+https://github.com/marti5ini/LIME-MV.git@main
 git+https://github.com/samueletonati/Counterfactual-Ensembles-For-Churn-Prediction.git@main
 git+https://github.com/calathea21/IFAC.git@main
+pandas~=2.3.3
+numpy~=2.2.6
+setuptools~=68.2.0

@@ -1,4 +1,4 @@
-from lore_sa.dataset import Dataset
+from dataset import Dataset
 from pandas import DataFrame
 
 
