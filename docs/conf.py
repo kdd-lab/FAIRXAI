@@ -7,6 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'fairxai')))
 project = 'FairXAI'
 copyright = '2025, Kode'
@@ -19,7 +20,7 @@ author = 'Kode'
 extensions = ["sphinx.ext.autodoc",
               "sphinx.ext.coverage",
               'sphinx.ext.viewcode',
-              "sphinx.ext.napoleon",'sphinx.ext.duration',
+              "sphinx.ext.napoleon", 'sphinx.ext.duration',
               'sphinx.ext.autosummary'
               ]
 
@@ -33,8 +34,7 @@ pygments_style = 'sphinx'
 
 autodoc_default_options = {"members": True, "inherited-members": True}
 autosummary_generate = True
-autoclass_content='class'
-
+autoclass_content = 'class'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

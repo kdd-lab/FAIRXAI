@@ -1,128 +1,108 @@
-from dataset import Dataset
-
-from ..logger import logger
 import pandas as pd
 from pandas import DataFrame
-import numpy as np
+
+from dataset import Dataset
+from ..descriptor.tabular_descriptor import TabularDatasetDescriptor
+from ..logger import logger
 
 __all__ = ["TabularDataset", "Dataset"]
 
 
 class TabularDataset(Dataset):
     """
-    It provides an interface to handle datasets, including some essential information on the structure and
-    semantic of the dataset.
+    Represents a tabular dataset with features, class labels, and metadata descriptors.
+
+    This class is designed to provide functionality for manipulating, describing,
+    and working with tabular datasets, including specifying categorical and
+    ordinal features. It supports creation from various data sources and includes
+    methods to manage metadata about the dataset.
 
     Attributes:
-        df (pandas.DataFrame): dataframe containing the whole dataset
-        descriptor (dict): it contains the essential informationregarding each feature. Format:
-         >   {'numeric': {'feature name' :
-         >                   {
-         >                       'index' : <index of feature column>,
-         >                       'min' : <min value>,
-         >                       'max' : <max value>,
-         >                       'mean': <mean value>,
-         >                       'std': <standard deviation>,
-         >                       'median': <median value>,
-         >                       'q1': <first quartile of the distribution>,
-         >                       'q3': <third quartile of the distribution,
-         >                   },
-         >               ...,
-         >               ...,
-         >               },
-         >   'categorical: {'feature name':
-         >                       {
-         >                           'index' : <index of feature column>,
-         >                           'distinct_values' : <distinct categorical values>,
-         >                           'value_counts' : {'distinct value' : <elements count>,
-         >                                           ... }
-         >                       }
-         >                   },
-         >   'ordinal: {'feature name':
-         >                       {
-         >                           'index' : <index of feature column>,
-         >                           'distinct_values' : <distinct categorical values>,
-         >                           'value_counts' : {'distinct value' : <elements count>,
-         >                                           ... }
-         >                       }
-         >                   },
-         >                   ...
-         >                   ...
-         >                   ...
-         >   }
+        class_name: The name of the column containing class labels in the dataset.
+        df: A pandas DataFrame containing the dataset's features and class labels.
+        descriptor: A dictionary describing metadata of the dataset, including
+            numeric, categorical, and ordinal features.
+
+    Methods:
+        update_descriptor(categorical_columns, ordinal_columns):
+            Updates the descriptor for the dataset with given metadata.
+        from_csv(filename, class_name, dropna):
+            Creates a TabularDataset object from a CSV file.
+        from_dict(data, class_name):
+            Creates a TabularDataset object from a dictionary of data.
+        set_class_name(class_name):
+            Sets the name of the column containing class labels.
+        get_class_values():
+            Returns the values of the class label column.
+        get_numeric_columns():
+            Retrieves the names of numeric columns in the dataset.
+        get_features_names():
+            Returns a list of the feature names in the dataset.
+        get_feature_name(index):
+            Retrieves the feature name corresponding to the given index.
     """
 
-    def __init__(self, data: DataFrame, class_name: str = None, categorial_columns:list = None, ordinal_columns:list = None):
+    def __init__(self, data: DataFrame, class_name: str = None,
+                 categorical_columns: list = None, ordinal_columns: list = None):
+        """
+        Initializes the class with the provided dataset and configuration for handling
+        categorical, ordinal, and class columns.
 
+        Attributes:
+            class_name: str
+                The name of the target column in the dataset, if applicable.
+            df: DataFrame
+                The dataset, with the target column moved to the last position if
+                class_name is specified.
+            descriptor: dict
+                A dictionary to describe dataset column types, categorized into
+                'numeric', 'categorical', and 'ordinal'.
+
+        Arguments:
+            data: DataFrame
+                The input dataset to be handled.
+            class_name: str, optional
+                The name of the target column to be moved to the end of the dataset.
+            categorical_columns: list, optional
+                A list specifying which columns in the dataset are categorical.
+            ordinal_columns: list, optional
+                A list specifying which columns in the dataset are ordinal.
+        """
         self.class_name = class_name
         self.df = data
 
-        # target columns forced to be the last column of the dataset
+        # move the target column to the end of the dataset for feature - target separation
         if class_name is not None:
-            self.df = self.df[[x for x in self.df.columns if x != class_name] + [class_name]]
+            self.df = self.df[[c for c in self.df.columns if c != class_name] + [class_name]]
 
         self.descriptor = {'numeric': {}, 'categorical': {}, 'ordinal': {}}
+        self.update_descriptor(categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
 
-        # creation of a default version of descriptor
-        self.update_descriptor(categorial_columns=categorial_columns, ordinal_columns=ordinal_columns)
-
-    def update_descriptor(self, categorial_columns:list = None, ordinal_columns:list = None):
+    def update_descriptor(self, categorical_columns: list = None, ordinal_columns: list = None):
         """
-        it creates the dataset descriptor dictionary
+        Updates the descriptor for the tabular dataset based on defined categorical and ordinal columns.
+
+        This method logs the process of creating the descriptor, utilizes the `TabularDatasetDescriptor`
+        to generate the descriptor, and assigns the resulting descriptor to the instance.
+
+        Args:
+            categorical_columns: List of column names to be treated as categorical, or None.
+            ordinal_columns: List of column names to be treated as ordinal, or None.
+
+        Returns:
+            dict: The updated descriptor generated for the tabular dataset.
         """
-        self.descriptor = {'numeric': {}, 'categorical': {}, 'ordinal': {}}
-        for feature in self.df.columns:
-            index = self.df.columns.get_loc(feature)
+        logger.info("Descriptor creation for tabular dataset")
 
-            # categorical feature?
-            if categorial_columns is not None and feature in categorial_columns:
-                desc = {'index': index,
-                        'distinct_values': list(self.df[feature].unique()),
-                        'count': {x: len(self.df[self.df[feature] == x]) for x in list(self.df[feature].unique())}}
-                self.descriptor['categorical'][feature] = desc
-            elif ordinal_columns is not None and feature in ordinal_columns:
-                desc = {'index': index,
-                        'distinct_values': list(self.df[feature].unique()),
-                        'count': {x: len(self.df[self.df[feature] == x]) for x in list(self.df[feature].unique())}}
-                self.descriptor['ordinal'][feature] = desc
-            elif feature in self.df.select_dtypes(include=np.number).columns.tolist():
-                # numerical
-                desc = {'index': index,
-                        'min': self.df[feature].min(),
-                        'max': self.df[feature].max(),
-                        'mean': self.df[feature].mean(),
-                        'std': self.df[feature].std(),
-                        'median': self.df[feature].median(),
-                        'q1': self.df[feature].quantile(0.25),
-                        'q3': self.df[feature].quantile(0.75),
-                        }
-                self.descriptor['numeric'][feature] = desc
-            else:
-                desc = {'index': index,
-                        'distinct_values': list(self.df[feature].unique()),
-                        'count': {x: len(self.df[self.df[feature] == x]) for x in list(self.df[feature].unique())}}
-                self.descriptor['categorical'][feature] = desc
+        descriptor = TabularDatasetDescriptor(
+            self.df,
+            class_name=self.class_name,
+            categorical_columns=categorical_columns,
+            ordinal_columns=ordinal_columns
+        ).describe()
 
-        self.descriptor = self.set_target_label(self.descriptor)
-
-    def set_target_label(self, descriptor):
-        """
-        Set the target column into the dataset descriptor
-
-        :param descriptor:
-        :return:
-        """
-        for type in descriptor:
-            for k in descriptor[type]:
-                if k == self.class_name:
-                    if type == 'numeric':
-                        raise Exception("ERR: target column cannot be continuous. Please, set a categorical column as target."
-                                        "You can force the content of target column by discretize it.")
-                    descriptor['target'] = {k: descriptor[type][k]}
-                    descriptor[type].pop(k)
-                    return descriptor
-
-        return descriptor
+        self.descriptor = descriptor
+        return self.descriptor
 
     @classmethod
     def from_csv(cls, filename: str, class_name: str = None, dropna: bool = True):

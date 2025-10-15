@@ -1,23 +1,41 @@
-from dataset import Dataset
-from pandas import DataFrame
+from . import Dataset
+from ..descriptor.image_descriptor import ImageDatasetDescriptor
+from ..logger import logger
 
 
 class ImageDataset(Dataset):
-    # FIXME: Per le immagini non avrò un dataset credo, il descrittore come dovrebbe essere fatto?
+    """
+    Represents an image dataset.
 
-    def __init__(self, data: DataFrame, class_name: str = None, categorial_columns:list = None, ordinal_columns:list = None):
+    This class is used to manage and operate on datasets of images. It
+    provides an interface to update and maintain descriptors for the
+    dataset, which can be useful for various image processing tasks.
+    """
 
+    def __init__(self, data, class_name=None):
+        """
+        Represents an initialization of an object with data and an optional class name.
+
+        Attributes:
+            data: The main data associated with the object.
+            class_name: An optional string that represents the class name associated with the data.
+
+        """
+        super().__init__()
+        self.data = data
         self.class_name = class_name
-        self.df = data
+        self.descriptor = None
 
-        # target columns forced to be the last column of the dataset
-        if class_name is not None:
-            self.df = self.df[[x for x in self.df.columns if x != class_name] + [class_name]]
+    def update_descriptor(self):
+        """
+        Updates the descriptor for the image dataset after creating it using the
+        ImageDatasetDescriptor. Logs the progress and sets the newly created
+        descriptor as the current descriptor for the dataset.
 
-        self.descriptor = {'numeric': {}, 'categorical': {}, 'ordinal': {}}
-
-        # creation of a default version of descriptor
-        self.update_descriptor(categorial_columns=categorial_columns, ordinal_columns=ordinal_columns)
-
-    def update_descriptor(self, categorial_columns:list = None, ordinal_columns:list = None):
-        pass
+        Returns:
+            dict: The updated descriptor of the image dataset.
+        """
+        logger.info("Descriptor creation for image dataset")
+        descriptor = ImageDatasetDescriptor(self.data).describe()
+        self.set_descriptor(descriptor)
+        return self.descriptor

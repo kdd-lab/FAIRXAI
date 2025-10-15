@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 __all__ = ["AbstractBBox"]
 
+
 class AbstractBBox(ABC):
     """
     Generic Black Box class witch provides two sklearn-like methods.
@@ -11,7 +12,6 @@ class AbstractBBox(ABC):
 
     def __init__(self, classifier):
         pass
-
 
     def model(self):
         """

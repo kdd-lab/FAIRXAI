@@ -4,10 +4,12 @@ from abc import abstractmethod
 
 from ..logger import logger
 
+
 class Dataset():
     """
     Generic class to handle datasets
     """
+
     @abstractmethod
     def update_descriptor(self):
         """
@@ -34,12 +36,11 @@ class Dataset():
 
         return descriptor
 
-
     def set_descriptor(self, descriptor):
         self.descriptor = descriptor
         self.descriptor = self.set_target_label(self.descriptor)
 
-    def set_class_name(self,class_name: str):
+    def set_class_name(self, class_name: str):
         """
         Set the class name. Only the column name string
         :param [str] class_name:
