@@ -1,9 +1,9 @@
 from typing import Any
 
-from fairxai.dataset import TabularDataset
-from fairxai.dataset.image_dataset import ImageDataset
-from fairxai.dataset.text_dataset import TextDataset
-from fairxai.dataset.timeserie_dataset import TimeSeriesDataset
+from fairxai.data.dataset import TabularDataset
+from fairxai.data.dataset.image_dataset import ImageDataset
+from fairxai.data.dataset.text_dataset import TextDataset
+from fairxai.data.dataset.timeserie_dataset import TimeSeriesDataset
 
 
 class DatasetFactory:

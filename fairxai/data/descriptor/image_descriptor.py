@@ -49,6 +49,7 @@ class ImageDatasetDescriptor(BaseDatasetDescriptor):
         # Case 2: Image provided as NumPy array
         elif isinstance(sample, np.ndarray):
             shape = sample.shape
+            # FIXME: in una batch ho sempre in cima la batch, l'ordine non è fisso (dipende da come è stato codificato il dataset)
             desc.update({
                 "input_format": "numpy",
                 # First two dimensions are height and width

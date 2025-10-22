@@ -1,6 +1,6 @@
 from . import Dataset
-from ..descriptor.text_descriptor import TextDatasetDescriptor
-from ..logger import logger
+from fairxai.data.descriptor.text_descriptor import TextDatasetDescriptor
+from fairxai.logger import logger
 
 
 class TextDataset(Dataset):

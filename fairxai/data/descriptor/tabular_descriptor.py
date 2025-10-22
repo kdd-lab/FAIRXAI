@@ -1,7 +1,7 @@
 import numpy as np
 from pandas import DataFrame
 
-from fairxai.descriptor.base_descriptor import BaseDatasetDescriptor
+from fairxai.data.descriptor.base_descriptor import BaseDatasetDescriptor
 
 
 class TabularDatasetDescriptor(BaseDatasetDescriptor):

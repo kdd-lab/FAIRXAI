@@ -1,6 +1,6 @@
 from . import Dataset
-from ..descriptor.timeserie_descriptor import TimeSeriesDatasetDescriptor
-from ..logger import logger
+from fairxai.data.descriptor.timeserie_descriptor import TimeSeriesDatasetDescriptor
+from fairxai.logger import logger
 
 
 class TimeSeriesDataset(Dataset):

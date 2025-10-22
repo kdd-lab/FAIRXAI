@@ -2,7 +2,7 @@ __all__ = ["Dataset"]
 
 from abc import abstractmethod
 
-from ..logger import logger
+from fairxai.logger import logger
 
 
 class Dataset():

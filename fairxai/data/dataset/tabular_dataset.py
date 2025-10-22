@@ -2,8 +2,8 @@ import pandas as pd
 from pandas import DataFrame
 
 from dataset import Dataset
-from ..descriptor.tabular_descriptor import TabularDatasetDescriptor
-from ..logger import logger
+from fairxai.data.descriptor.tabular_descriptor import TabularDatasetDescriptor
+from fairxai.logger import logger
 
 __all__ = ["TabularDataset", "Dataset"]
 

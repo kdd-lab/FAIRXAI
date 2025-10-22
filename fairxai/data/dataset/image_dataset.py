@@ -1,6 +1,6 @@
 from . import Dataset
-from ..descriptor.image_descriptor import ImageDatasetDescriptor
-from ..logger import logger
+from fairxai.data.descriptor.image_descriptor import ImageDatasetDescriptor
+from fairxai.logger import logger
 
 
 class ImageDataset(Dataset):
