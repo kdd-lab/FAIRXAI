@@ -1,6 +1,6 @@
-from . import Dataset
 from fairxai.data.descriptor.text_descriptor import TextDatasetDescriptor
 from fairxai.logger import logger
+from . import Dataset
 
 
 class TextDataset(Dataset):
@@ -45,6 +45,5 @@ class TextDataset(Dataset):
             TextDatasetDescriptor.
         """
         logger.info("description creation for text dataset")
-        descriptor = TextDatasetDescriptor(self.data).describe()
-        self.set_descriptor(descriptor)
+        self.descriptor = TextDatasetDescriptor(self.data).describe()
         return self.descriptor

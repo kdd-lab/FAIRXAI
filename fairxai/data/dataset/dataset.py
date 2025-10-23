@@ -1,77 +1,49 @@
 __all__ = ["Dataset"]
 
-from abc import abstractmethod
-
-from fairxai.logger import logger
+from abc import ABC, abstractmethod
 
 
-class Dataset():
+class Dataset(ABC):
     """
-    Generic class to handle datasets
+    Generic abstract class to handle datasets of different modalities
+    (tabular, image, text, timeseries).
+
+    Attributes:
+        data: The raw dataset (DataFrame, list, or array depending on modality)
+        descriptor: Dictionary describing dataset structure and statistics
+        class_name: Optional target column name (for tabular datasets)
+        target: Optional, contains the target column values
     """
 
+    def __init__(self, data=None, class_name: str = None):
+        self.data = data
+        self.descriptor = None
+        self.class_name = class_name
+        self.target = None
+
+    # -------------------------------------------------------------------------
+    # Abstract methods
+    # -------------------------------------------------------------------------
     @abstractmethod
-    def update_descriptor(self):
+    def update_descriptor(self, *args, **kwargs):
         """
-        it creates the dataset descriptor dictionary
+        Must create and assign the dataset descriptor.
+        Each subclass should call its specific BaseDatasetDescriptor.describe().
         """
+        raise NotImplementedError
 
-    def set_target_label(self, descriptor):
+    # -------------------------------------------------------------------------
+    # Descriptor management
+    # -------------------------------------------------------------------------
+    def set_descriptor(self, descriptor: dict):
         """
-        Set the target column into the dataset descriptor
-
-        :param descriptor:
-        :return: a modified version of the input descriptor with a new key 'target'
+        Assign a descriptor dictionary to the dataset.
         """
-        if self.class_name is None:
-            logger.warning("No target class is defined")
-            return descriptor
-
-        for type in descriptor:
-            for k in descriptor[type]:
-                if k == self.class_name:
-                    descriptor['target'] = {k: descriptor[type][k]}
-                    descriptor[type].pop(k)
-                    return descriptor
-
-        return descriptor
-
-    def set_descriptor(self, descriptor):
         self.descriptor = descriptor
-        self.descriptor = self.set_target_label(self.descriptor)
 
     def set_class_name(self, class_name: str):
         """
-        Set the class name. Only the column name string
-        :param [str] class_name:
-        :return:
+        Define the target column name.
+        Optionally extracts the target values from the dataset (for tabular).
         """
         self.class_name = class_name
-        self.descriptor = self.set_target_label(self.descriptor)
-
-    def get_class_values(self):
-        """
-        return the list of values of the target column
-        :return:
-        """
-        if self.class_name is None:
-            raise Exception("ERR: class_name is None. Set class_name with set_class_name('<column name>')")
-        print("test1", self.descriptor['target'])
-        return self.descriptor['target'][self.class_name]['distinct_values']
-
-    def get_numeric_columns(self):
-        numeric_columns = list(self.descriptor['numeric'].keys())
-        return numeric_columns
-
-    def get_categorical_columns(self):
-        categorical_columns = list(self.descriptor['categorical'].keys())
-        return categorical_columns
-
-    def get_feature_names(self):
-        return self.get_numeric_columns() + self.get_categorical_columns()
-
-    def get_number_of_features(self):
-        return len(self.get_feature_names())
-
-    def get_feature_name(self, index):
-        pass

@@ -3,10 +3,11 @@ import os
 import numpy as np
 from PIL import Image
 
-from .base_descriptor import BaseDatasetDescriptor
+from fairxai.data.descriptor.base_descriptor import BaseDatasetDescriptor
 
 
 class ImageDatasetDescriptor(BaseDatasetDescriptor):
+
     def describe(self) -> dict:
         """
         Analyzes and describes an image dataset.

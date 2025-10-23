@@ -1,176 +1,180 @@
-import numpy as np
-from pandas import DataFrame
-
-from fairxai.data.descriptor.base_descriptor import BaseDatasetDescriptor
+from numpy import number
+from pandas import DataFrame, Series
 
 
-class TabularDatasetDescriptor(BaseDatasetDescriptor):
+class TabularDatasetDescriptor:
     """
-    Represents a descriptor for a tabular dataset, providing functionality
-    to summarize and categorize dataset features, including numeric,
-    categorical, and ordinal columns.
+    Handles the description of a tabular dataset by categorizing its columns into
+    categorical, ordinal, and numeric types and providing summary statistics.
 
-    This class is designed to process a dataset represented as a pandas
-    DataFrame and classify its columns based on specified categorical or
-    ordinal attribute lists. Additionally, it calculates statistics for
-    numeric columns and generates a structured descriptor dictionary.
+    This class accepts a dataset and optional lists of column names representing
+    categorical and ordinal data. It provides methods to describe the dataset, retrieve
+    specific column types, and export the computed descriptions as a dictionary.
 
     Attributes:
-        class_name: str or None
-            The name of the target/class column, if defined.
-        categorical_columns: list or None
-            A list of column names explicitly defined as categorical.
-        ordinal_columns: list or None
-            A list of column names explicitly defined as ordinal.
+        data (DataFrame): The main tabular dataset for analysis.
+        categorical_columns (list): A list of column names which are considered
+            categorical variables.
+        ordinal_columns (list): A list of column names which are considered ordinal
+            variables.
 
     Methods:
         describe():
-            Summarizes the dataset by categorizing and computing statistics
-            for numeric, categorical, and ordinal columns.
+            Describes the dataset by categorizing its columns and computing summary
+            statistics for each type.
+
+        get_numeric_columns():
+            Returns the names of numeric columns.
+
+        get_categorical_columns():
+            Returns the list of categorical column names.
+
+        get_ordinal_columns():
+            Retrieves the list of ordinal column names.
     """
 
-    def __init__(self, data: DataFrame, class_name: str = None,
-                 categorical_columns: list = None, ordinal_columns: list = None):
-        # Call the parent class constructor with the data
-        super().__init__(data)
-        # Store the name of the target/class column
-        self.class_name = class_name
-        # Store the list of categorical column names
-        self.categorical_columns = categorical_columns
-        # Store the list of ordinal column names
-        self.ordinal_columns = ordinal_columns
+    def __init__(self, data: DataFrame, categorical_columns: list = None, ordinal_columns: list = None):
+        self.data = data
+        self.categorical_columns = categorical_columns or []
+        self.ordinal_columns = ordinal_columns or []
+
+        # internal state
+        self.numeric = {}
+        self.categorical = {}
+        self.ordinal = {}
 
     def describe(self) -> dict:
         """
-        Generates a detailed description of the dataset by categorizing columns
-        into numeric, categorical, or ordinal types and computing statistical
-        or frequency-based metadata for each feature. This method processes all
-        columns within the dataset and applies appropriate descriptive analysis
-        based on the column's category or data type.
+        Provides a method to describe data by categorizing features into numeric, categorical,
+        and ordinal classifications with comprehensive summaries based on the column type.
+        The specific descriptions are organized into respective dictionaries for easy
+        retrieval.
 
         Returns:
-            dict: A comprehensive dictionary containing detailed descriptions
-            for each column categorized into 'numeric', 'categorical', and
-            'ordinal', along with their respective statistics such as min, max,
-            mean, standard deviation, quartiles, distinct values, and value
-            counts where applicable.
+            dict: A dictionary representation combining numeric, categorical,
+            and ordinal descriptions.
 
         Raises:
-            Exception: If an unknown error occurs during the writing of the
-            descriptor or the processing of columns.
+            Uses private/protected methods for column type determination and
+            summary creation. Errors related to private/protected methods, if any,
+            are not documented here.
         """
-        # Create a reference to the DataFrame for cleaner code
         df = self.data
-        # Initialize descriptor dictionary with empty categories
-        descriptor = {'numeric': {}, 'categorical': {}, 'ordinal': {}}
+        self.numeric.clear()
+        self.categorical.clear()
+        self.ordinal.clear()
 
-        # Iterate through each column in the DataFrame
         for feature in df.columns:
-            # Get the positional index of the current column
             index = df.columns.get_loc(feature)
+            col_type = self._get_column_type(feature, df)
 
-            # CATEGORICAL
-            # Check if the feature is explicitly defined as categorical
-            if self.categorical_columns and feature in self.categorical_columns:
-                desc = {
-                    'index': index,
-                    # Get all unique values in this column
-                    'distinct_values': list(df[feature].unique()),
-                    # Count occurrences of each unique value
-                    'count': {x: len(df[df[feature] == x]) for x in df[feature].unique()}
-                }
-                descriptor['categorical'][feature] = desc
-
-            # ORDINAL
-            # Check if the feature is explicitly defined as ordinal
-            elif self.ordinal_columns and feature in self.ordinal_columns:
-                desc = {
-                    'index': index,
-                    # Get all unique values in this column
-                    'distinct_values': list(df[feature].unique()),
-                    # Count occurrences of each unique value
-                    'count': {x: len(df[df[feature] == x]) for x in df[feature].unique()}
-                }
-                descriptor['ordinal'][feature] = desc
-
-            # NUMERIC
-            # Check if the feature has a numeric data type (uses NumPy number types)
-            elif feature in df.select_dtypes(include=np.number).columns.tolist():
-                desc = {
-                    'index': index,
-                    # Calculate minimum value
-                    'min': df[feature].min(),
-                    # Calculate maximum value
-                    'max': df[feature].max(),
-                    # Calculate mean (average)
-                    'mean': df[feature].mean(),
-                    # Calculate standard deviation
-                    'std': df[feature].std(),
-                    # Calculate median (50th percentile)
-                    'median': df[feature].median(),
-                    # Calculate first quartile (25th percentile)
-                    'q1': df[feature].quantile(0.25),
-                    # Calculate third quartile (75th percentile)
-                    'q3': df[feature].quantile(0.75)
-                }
-                descriptor['numeric'][feature] = desc
-
-            # OTHERWISE: fallback to categorical
-            # If none of the above conditions match, treat as categorical
+            if col_type == 'categorical':
+                self.categorical[feature] = self._create_categorical_description(df[feature], index)
+            elif col_type == 'ordinal':
+                self.ordinal[feature] = self._create_categorical_description(df[feature], index)
             else:
-                desc = {
-                    'index': index,
-                    # Get all unique values in this column
-                    'distinct_values': list(df[feature].unique()),
-                    # Count occurrences of each unique value
-                    'count': {x: len(df[df[feature] == x]) for x in df[feature].unique()}
-                }
-                descriptor['categorical'][feature] = desc
+                self.numeric[feature] = self._create_numeric_description(df[feature], index)
 
-        # Gestione target
-        # Process and move the target column to its own category
-        descriptor = self._set_target_label(descriptor)
-        return descriptor
+        return self._as_dict()
 
-    def _set_target_label(self, descriptor: dict) -> dict:
+    def _get_column_type(self, feature: str, df: DataFrame) -> str:
         """
-        Sets the target label in the provided descriptor based on the specified target class name.
-        This method identifies the target column in the input descriptor and moves it from its original
-        category to a new "target" category. If the target column is not found, the method returns the
-        descriptor unchanged. It raises an exception if the target column is in the "numeric" category.
+        Determines the type of column (categorical, ordinal, or numeric).
 
-        Parameters:
-        descriptor (dict): A dictionary representing the metadata about features, categorized under
-        numeric, categorical, or ordinal types.
+        Args:
+            feature: Column name
+            df: DataFrame containing the data
 
         Returns:
-        dict: The updated descriptor where the target column is categorized under the "target" key or
-        the original descriptor if the target column is not found.
-
-        Raises:
-        Exception: If the target column is continuous (numeric) and not categorical or ordinal.
+            Column type as string
         """
-        # If no class name is specified, return descriptor unchanged
-        if not self.class_name:
-            return descriptor
+        if feature in self.categorical_columns:
+            return "categorical"
+        elif feature in self.ordinal_columns:
+            return "ordinal"
+        elif feature in df.select_dtypes(include=number).columns.tolist():
+            return "numeric"
+        else:
+            raise ValueError(f"Unknown column type for column '{feature}'.")
 
-        # Iterate through each category (numeric, categorical, ordinal)
-        for category in descriptor:
-            # Iterate through features in the current category
-            for feature in list(descriptor[category].keys()):
-                # Check if this feature is the target column
-                if feature == self.class_name:
-                    # Prevent numeric columns from being used as target
-                    if category == "numeric":
-                        raise Exception(
-                            "ERR: target column cannot be continuous. Please, set a categorical column as target. "
-                            "You can discretize the target to force it."
-                        )
-                    # Create a separate "target" entry in the descriptor
-                    descriptor["target"] = {feature: descriptor[category][feature]}
-                    # Remove the target from its original category
-                    descriptor[category].pop(feature)
-                    return descriptor
+    def _create_categorical_description(self, series: Series, index: int) -> dict:
+        """
+        Creates the description for a categorical or ordinal column.
 
-        # Return descriptor if target column was not found
-        return descriptor
+        Args:
+            series: Pandas series containing the column data
+            index: Column index in the DataFrame
+
+        Returns:
+            Dictionary with column statistics
+        """
+        unique_values = series.unique()
+        return {
+            'index': index,
+            'distinct_values': list(unique_values),
+            'count': {x: int((series == x).sum()) for x in unique_values}
+        }
+
+    def _create_numeric_description(self, series: Series, index: int) -> dict:
+        """
+        Creates the description for a numeric column.
+
+        Args:
+            series: Pandas series containing the column data
+            index: Column index in the DataFrame
+
+        Returns:
+            Dictionary with column statistics
+        """
+        return {
+            'index': index,
+            'min': series.min(),
+            'max': series.max(),
+            'mean': series.mean(),
+            'std': series.std(),
+            'median': series.median(),
+            'q1': series.quantile(0.25),
+            'q3': series.quantile(0.75)
+        }
+
+    # --- Utility methods ---
+    def get_numeric_columns(self):
+        """
+        Returns the names of numeric columns.
+
+        Returns:
+            list: A list containing the names of numeric columns.
+        """
+        return list(self.numeric.keys())
+
+    def get_categorical_columns(self):
+        """
+        Returns the list of categorical column names.
+
+        Returns:
+            List[str]: A list containing the names of categorical columns.
+        """
+        return list(self.categorical.keys())
+
+    def get_ordinal_columns(self):
+        """
+        Retrieves the list of ordinal column names.
+
+        Returns:
+            list: A list of column names corresponding to ordinal data.
+        """
+        return list(self.ordinal.keys())
+
+    def _as_dict(self):
+        """
+        Converts the object's attributes to a dictionary representation.
+
+        Returns:
+            dict: A dictionary containing the object's attributes mapped to
+            their corresponding values.
+        """
+        return {
+            'numeric': self.numeric,
+            'categorical': self.categorical,
+            'ordinal': self.ordinal
+        }

@@ -1,6 +1,6 @@
-from . import Dataset
 from fairxai.data.descriptor.timeserie_descriptor import TimeSeriesDatasetDescriptor
 from fairxai.logger import logger
+from . import Dataset
 
 
 class TimeSeriesDataset(Dataset):
@@ -52,6 +52,5 @@ class TimeSeriesDataset(Dataset):
             dict: The generated descriptor for the timeseries dataset.
         """
         logger.info("Descriptor generation for timeseries dataset")
-        descriptor = TimeSeriesDatasetDescriptor(self.data).describe()
-        self.set_descriptor(descriptor)
+        self.descriptor = TimeSeriesDatasetDescriptor(self.data).describe()
         return self.descriptor
