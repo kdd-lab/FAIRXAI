@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Optional
 
 from fairxai.data.dataset import TabularDataset
 from fairxai.data.dataset.image_dataset import ImageDataset
@@ -8,50 +8,57 @@ from fairxai.data.dataset.timeserie_dataset import TimeSeriesDataset
 
 class DatasetFactory:
     """
-    Responsible for creating dataset instances of various types using a registry pattern.
-
-    This factory class abstracts the creation of dataset objects based on a specified type.
-    It uses a registry mapping to identify and instantiate the appropriate dataset class for
-    handling specific dataset types such as tabular, image, text, and timeseries datasets.
+    Factory class responsible for creating dataset instances (tabular, image, text, timeseries)
+    using a registry pattern and dataset-specific initialization parameters.
     """
 
-    # Registry mapping dataset type strings to dataset classes
     _registry = {
         "tabular": TabularDataset,
         "image": ImageDataset,
         "text": TextDataset,
-        "timeseries": TimeSeriesDataset
+        "timeseries": TimeSeriesDataset,
     }
 
     @classmethod
-    def create(cls, data: Any, dataset_type: str, class_name: str = None):
+    def create(
+            cls,
+            data: Any,
+            dataset_type: str,
+            class_name: Optional[str] = None,
+            categorical_columns: Optional[List[str]] = None,
+            ordinal_columns: Optional[List[str]] = None
+    ):
         """
-        Creates and returns an instance of a dataset class based on the provided dataset type.
+        Create and return a dataset instance based on the specified type.
 
-        This method serves as a factory for creating instances of registered dataset types.
-        It checks whether the specified dataset type is supported, and if so, initializes an
-        instance of the corresponding dataset class.
+        For tabular datasets, additional arguments such as categorical and ordinal columns
+        can be provided to correctly configure the dataset descriptor.
 
         Parameters:
-            data: Any
-                The data to be processed by the dataset class.
-            dataset_type: str
-                The type of dataset to create. Must be a registered dataset type.
-            class_name: str, optional
-                The target column name for tabular datasets, defaults to None.
+            data (Any): Input data.
+            dataset_type (str): One of ["tabular", "image", "text", "timeseries"].
+            class_name (str, optional): Target/label column name (for supervised datasets).
+            categorical_columns (list[str], optional): Columns to treat as categorical (tabular only).
+            ordinal_columns (list[str], optional): Columns to treat as ordinal (tabular only).
 
         Returns:
-            object
-                An instance of the dataset class corresponding to the specified dataset type.
+            Dataset: An instance of the appropriate dataset subclass.
 
         Raises:
-            ValueError
-                If the provided dataset type is not supported, or not found in the registry.
+            ValueError: If the dataset_type is unsupported.
         """
         dataset_type = dataset_type.lower()
         if dataset_type not in cls._registry:
-            raise ValueError(f"Unsupported dataset type '{dataset_type}'. "
-                             f"Supported types are: {list(cls._registry.keys())}")
+            raise ValueError(
+                f"Unsupported dataset type '{dataset_type}'. "
+                f"Supported types are: {list(cls._registry.keys())}"
+            )
 
         dataset_class = cls._registry[dataset_type]
-        return dataset_class(data, class_name)
+
+        if dataset_type == "tabular":
+            # Explicitly handle tabular datasets (requires column type hints)
+            return dataset_class(data=data, class_name=class_name, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
+
+        # For all other dataset types, use the standard constructor
+        return dataset_class(data, class_name=class_name)

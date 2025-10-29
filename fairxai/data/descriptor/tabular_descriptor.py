@@ -1,6 +1,8 @@
 from numpy import number
 from pandas import DataFrame, Series
 
+from fairxai.logger import logger
+
 
 class TabularDatasetDescriptor:
     """
@@ -49,35 +51,42 @@ class TabularDatasetDescriptor:
 
     def describe(self) -> dict:
         """
-        Provides a method to describe data by categorizing features into numeric, categorical,
-        and ordinal classifications with comprehensive summaries based on the column type.
-        The specific descriptions are organized into respective dictionaries for easy
-        retrieval.
+        Analyzes and describes each column in the dataset, categorizing them into
+        numerical, categorical, and ordinal types, and provides detailed summaries
+        of each type. The method iterates through all columns in the dataset,
+        determines their types, and organizes their descriptions accordingly.
 
-        Returns:
-            dict: A dictionary representation combining numeric, categorical,
-            and ordinal descriptions.
+        Returns the summarized descriptions as a dictionary format.
 
         Raises:
-            Uses private/protected methods for column type determination and
-            summary creation. Errors related to private/protected methods, if any,
-            are not documented here.
+            ValueError: Raised when an error occurs during column type determination, typically
+                due to issues in data processing or invalid dataset configuration.
+
+
+        Returns:
+            dict: A dictionary containing structured descriptions of numeric, categorical,
+                and ordinal features extracted from the dataset.
         """
         df = self.data
         self.numeric.clear()
         self.categorical.clear()
         self.ordinal.clear()
 
-        for feature in df.columns:
-            index = df.columns.get_loc(feature)
-            col_type = self._get_column_type(feature, df)
+        try:
 
-            if col_type == 'categorical':
-                self.categorical[feature] = self._create_categorical_description(df[feature], index)
-            elif col_type == 'ordinal':
-                self.ordinal[feature] = self._create_categorical_description(df[feature], index)
-            else:
-                self.numeric[feature] = self._create_numeric_description(df[feature], index)
+            for feature in df.columns:
+                index = df.columns.get_loc(feature)
+                col_type = self._get_column_type(feature, df)
+
+                if col_type == 'categorical':
+                    self.categorical[feature] = self._create_categorical_description(df[feature], index)
+                elif col_type == 'ordinal':
+                    self.ordinal[feature] = self._create_categorical_description(df[feature], index)
+                else:
+                    self.numeric[feature] = self._create_numeric_description(df[feature], index)
+        except ValueError as e:
+            logger.error(f"Error during column type determination: {e}")
+            raise ValueError(e)
 
         return self._as_dict()
 
