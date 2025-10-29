@@ -1,6 +1,6 @@
 import uuid
-from typing import List, Type, Dict, Any
 from datetime import datetime
+from typing import List, Type, Dict, Any
 
 from fairxai.bbox import AbstractBBox
 from fairxai.data.dataset import Dataset

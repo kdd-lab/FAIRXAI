@@ -1,18 +1,12 @@
 class GenericExplanation:
     """
-    Represents a generic explanation container for managing, summarizing, and visualizing explanation data.
-    This class is designed to store and manipulate explanation data, including metadata about explainer
-    name and type of explanation. It provides methods to convert the object to a dictionary representation,
-    generate a summary of its content, and define placeholder functionality for visualization to be
-    implemented by subclasses.
-    Attributes
-    ----------
-    explainer_name : str
-        The name of the explainer providing the explanation.
-    explanation_type : str
-        The type of explanation provided. Options are "local" or "global".
-    data : dict
-        A dictionary containing the explanation data to be processed.
+    A container class for managing and summarizing explanatory data.
+
+    This class serves as a base for handling explanation data provided by different
+    explainers. It allows the storage, serialization, summarization, and visualization
+    of explanatory information. Explanation types can either be local or global, as defined
+    by the constants. Subclasses can extend their functionality, particularly by implementing
+    the visualization logic.
     """
 
     # Constants for explanation types
@@ -30,12 +24,14 @@ class GenericExplanation:
 
     def to_dict(self) -> dict:
         """
-        Converts the object instance data into a dictionary format.
-        Returns
-        -------
-        dict
-            A dictionary containing the object's `explainer` name, `type` of
-            explanation, and associated `data` values.
+        Convert the object into a dictionary representation.
+
+        This method serializes the object to a dictionary format suitable
+        for data transfer or storage. It includes essential properties
+        like the explanation type, the explainer name, and the data content.
+
+        Returns:
+            dict: A dictionary containing the object's data as key-value pairs.
         """
         # Convert object to dictionary for serialization or data transfer
         return {
@@ -46,13 +42,14 @@ class GenericExplanation:
 
     def summarize(self) -> str:
         """
-        Generates a detailed summary by compiling information stored in the object's attributes.
-        The summary includes the explainer name, explanation type, and keys with their corresponding values
-        from the data dictionary. For longer values, only the first 100 characters are included in the summary.
-        Returns
-        -------
-        str
-            A formatted summary string encapsulating object details.
+        Generate a formatted summary of explanation details.
+
+        This method combines details about the explainer's name, type, and additional
+        data into a readable, string-based summary. The data items are iterated over
+        and their values are formatted for better presentation.
+
+        Returns:
+            str: A string summarizing the explainer's name, type, and data items.
         """
         # Create header with explainer name and type
         summary = f"Explanation {self.explainer_name} ({self.explanation_type})\n"
@@ -65,17 +62,16 @@ class GenericExplanation:
 
     def _format_value(self, value) -> str:
         """
-        Formats a value for display in the summary, truncating if necessary.
+        Converts a given value to its string representation and truncates it to a maximum length
+        if it exceeds the predefined limit.
 
-        Parameters
-        ----------
-        value : any
-            The value to format.
+        Parameters:
+        value: Any
+            The value to be converted to a string representation.
 
-        Returns
-        -------
+        Returns:
         str
-            The formatted value string, truncated if longer than MAX_VALUE_LENGTH.
+            The string representation of the value, truncated if it exceeds the maximum allowed length.
         """
         # Convert value to string
         value_str = str(value)
@@ -87,14 +83,16 @@ class GenericExplanation:
 
     def visualize(self):
         """
-        Provides the visualization logic for implementing custom graphical or
-        other forms of representations based on the context. This method is
-        intended to be overridden by subclasses to define specific behavior.
+        Abstract method to be implemented by subclasses for visualization.
 
-        Raises
-        ------
-        NotImplementedError
-            If the method is not overridden in a subclass.
+        This method serves as a template method that subclasses must override to
+        provide their specific implementation for visualization logic. It is
+        intentionally left unimplemented in the base class and raises a
+        NotImplementedError if called directly.
+
+        Raises:
+            NotImplementedError: Always raised when the method is invoked, indicating
+            that it must be implemented by a subclass.
         """
         # Abstract method - must be implemented by subclasses
         # Template Method Pattern: define the interface, delegate implementation

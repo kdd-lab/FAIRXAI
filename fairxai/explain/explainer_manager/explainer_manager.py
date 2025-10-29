@@ -1,256 +1,361 @@
 from typing import List, Type, Any
 
+from fairxai.data.dataset.dataset_factory import DatasetFactory
 from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
 from fairxai.logger import logger
 
 
-class ExplainerManager:
+class SingletonExplainerManager(type):
     """
-    Operational module of the library.
+    Metaclass that implements the Singleton design pattern.
 
-    Responsibilities:
-    - Analyzes the dataset and shows compatible explainers
-    - Executes the pipeline of selected explainers
-    - Manages visualization of results
-    - Provides guided wizards for configuration
+    This metaclass ensures that a class using it can only have one instance. If an
+    instance exists, it returns the existing instance; otherwise, it creates a new
+    one.
+
+    Attributes:
+        _instances (dict): Dictionary to store the single instances of classes
+            using this metaclass.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        """
+        Handles the creation of singleton instances for classes. Ensures that only one
+        instance of a class exists and provides a global point of access to it.
+
+        Parameters:
+            cls: The class for which the instance needs to be created.
+            *args: Positional arguments to be passed to the class constructor.
+            **kwargs: Keyword arguments to be passed to the class constructor.
+
+        Returns:
+            The singleton instance of the class.
+
+        Raises:
+            Does not explicitly raise any error but can propagate exceptions raised
+            by the class constructor.
+        """
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class ExplainerManager(metaclass=SingletonExplainerManager):
+    """
+    Manages the registration, initialization, and use of explainer classes.
+
+    This class serves as a central registry for managing explainer classes that
+    extend the `GenericExplainerAdapter`. It provides functionality for registering
+    new explainer classes, retrieving and initializing them, as well as managing
+    the generation of explanations for individual instances or global analyses.
+
+    Additionally, this class ensures compatibility between explainers, models, and
+    datasets, making it a robust framework for handling various explanation needs.
     """
 
-    def __init__(self, project):
-        # Store the project reference containing dataset, model, and available explainers
-        self.project = project
-        logger.info("ExplainerManager initialized.")
-
-    # -----------------------------
-    # Core functionality
-    # -----------------------------
-
-    def list_available_explainers(self) -> List[str]:
+    def __init__(self):
         """
-        Returns all available explainers in the project.
+        Initializes the attributes required for the class to store and manage explainers.
 
-        Returns
-        -------
-        List[str]
-            List of all explainer class names available in the project.
+        Attributes:
+            explainers (dict[str, Type[GenericExplainerAdapter]]): A dictionary that stores explainer classes,
+            where the keys are strings representing the names or identifiers of the explainers, and the values
+            are the respective classes (not instances) implementing the explainers.
         """
-        # Extract and return the names of all explainer classes registered in the project
-        return [e.__name__ for e in self.project.explainers]
+        # Store explainer classes (not instances) in a registry
+        self.explainers: dict[str, Type[GenericExplainerAdapter]] = {}
 
-    def list_compatible_explainers(self) -> List[str]:
+    def register_explainer(self, name: str, explainer_cls: Type[GenericExplainerAdapter]):
         """
-        Returns only explainers compatible with the dataset and model.
+        Registers a new explainer class to the explainer registry.
 
-        Returns
-        -------
-        List[str]
-            List of compatible explainer class names.
+        The provided class must inherit from `GenericExplainerAdapter`. Once registered,
+        the explainer can be referenced by the given name for future use.
+
+        Parameters:
+        name: str
+            The name under which the explainer will be registered.
+        explainer_cls: Type[GenericExplainerAdapter]
+            The class of the explainer to be registered. This class must be a subclass
+            of `GenericExplainerAdapter`.
+        Raises:
+        TypeError
+            If the provided `explainer_cls` does not inherit from `GenericExplainerAdapter`.
         """
-        # Query the project for explainers that match the current dataset and model types
-        compatible = self.project.get_compatible_explainers()
-        return [e.__name__ for e in compatible]
+        # Validate that the class inherits from GenericExplainerAdapter
+        if not issubclass(explainer_cls, GenericExplainerAdapter):
+            raise TypeError(
+                f"Cannot register {explainer_cls.__name__}: must inherit from GenericExplainerAdapter"
+            )
+        # Register the explainer class in the registry
+        self.explainers[name] = explainer_cls
+        logger.info(f"Explainer '{name}' registered successfully")
 
-    def run_explainer(self, explainer_cls: Type[GenericExplainerAdapter], instance: Any):
+    def get_explainer(self, name: str, model, dataset) -> GenericExplainerAdapter:
         """
-        Executes an explainer and visualizes the result.
-        Blocks execution if not compatible.
+        Retrieves and initializes an explainer adapter based on its registered name.
 
-        Parameters
-        ----------
-        explainer_cls : Type[GenericExplainerAdapter]
-            The explainer class to execute.
-        instance : Any
-            The instance to explain.
+        This method checks if an explainer with the specified name is registered. If the
+        explainer is found, it initializes and returns the corresponding adapter.
+        Otherwise, it raises an error indicating that the explainer is not registered.
 
-        Returns
-        -------
-        GenericExplanation
-            The generated explanation object.
+        Parameters:
+        name: str
+            The name of the explainer to retrieve.
+        model
+            The model to be explained by the explainer.
+        dataset
+            The dataset to be used for the explanation process.
+
+        Returns:
+        GenericExplainerAdapter
+            An instance of the registered explainer adapter.
+
+        Raises:
+        KeyError
+            If no explainer is registered under the specified name.
         """
-        logger.debug(f"Running explainer {explainer_cls.__name__}...")
+        if name not in self.explainers:
+            raise KeyError(f"Unregistered explainer '{name}'.")
+        return self._create_explainer(name, model, dataset)
 
-        # Generate the explanation by delegating to the project's run_explanation method
-        # This method handles compatibility checks and explainer instantiation
-        explanation = self.project.run_explanation(explainer_cls, instance)
-        logger.info(f"Explanation generated by {explainer_cls.__name__}. Visualizing...")
+    def list_compatible_explainers(self, dataset_type: str, model_type: str) -> List[str]:
+        """
+        Filters and returns a list of compatible explainer names for a given dataset type and
+        model type.
 
-        # Automatically visualize the generated explanation
-        explanation.visualize()
+        The method checks the compatibility of each explainer defined in the 'explainers'
+        dictionary by invoking their class-level method `is_compatible()`. The names of the
+        compatible explainers are collected and returned as a list. A log entry is generated
+        indicating the number of compatible explainers found for the provided combination
+        of dataset and model types.
+
+        Args:
+            dataset_type: The type of dataset to check compatibility for.
+            model_type: The type of model to check compatibility for.
+
+        Returns:
+            List of explainer names that are compatible with the specified dataset type and
+            model type.
+        """
+        # Filter explainers using their is_compatible() class method
+        compatible = [
+            name for name, cls in self.explainers.items()
+            if cls.is_compatible(dataset_type, model_type)
+        ]
+        logger.info(f"Found {len(compatible)} compatible explainer(s) for {dataset_type} + {model_type}")
+        return compatible
+
+    def explain_instance(self, explainer_name: str, model, data: Any, dataset_type: str, instance,
+                         class_name: str = None):
+        """
+        Generates an explanation for a single instance using a specified explainer.
+
+        This method allows the user to generate explanations for a specific data instance
+        by selecting an explainer from the available registered explainers. It performs
+        several steps including dataset creation, explainer compatibility checks, and
+        finally invoking the explanation generation.
+
+        Parameters:
+            explainer_name (str): The name of the registered explainer to be used.
+            model: The machine learning model for which the explanation is being generated.
+            data (Any): The raw dataset or input data used for creating the explainer input.
+            dataset_type (str): The type of the dataset (e.g., 'tabular', 'image', 'text').
+            instance: The specific instance of the data to explain.
+            class_name (str, optional): Name of a specific class or label to consider during
+                                        explanation generation, if applicable.
+
+        Raises:
+            KeyError: If the specified explainer is not registered.
+            ValueError: If the selected explainer is not compatible with the dataset type
+                        and/or the model type.
+
+        Returns:
+            Explanation object generated by the explainer, detailing the explanation for
+            the given data instance.
+        """
+        # Step 0: create the dataset from raw data
+        dataset = self._create_dataset(data, dataset_type, class_name)
+
+        # Step 1: check if the explainer exists
+        if explainer_name not in self.explainers:
+            raise KeyError(f"Explainer '{explainer_name}' not registered")
+
+        # Step 2: instantiate explainer
+        explainer_cls = self.explainers[explainer_name]
+        explainer = explainer_cls(model=model, dataset=dataset)
+
+        # Step 3: compatibility check
+        if not explainer.is_compatible(dataset_type=dataset_type, model_type=type(model).__name__):
+            raise ValueError(
+                f"Explainer '{explainer_name}' is not compatible with dataset type '{dataset_type}' and model type '{type(model).__name__}'")
+
+        # Step 4: generate explanation
+        explanation = explainer.explain_instance(instance)
         return explanation
 
-    # -----------------------------
-    # Wizard-guided interface
-    # -----------------------------
-
-    def run_wizard(self):
+    def explain_global(self, explainer_name: str, model, dataset):
         """
-        Interactive wizard that guides the user in selecting dataset, model and explainer.
+        Executes a global explanation process using the specified explainer for a given model and dataset.
 
-        This method orchestrates the entire wizard flow by delegating specific tasks
-        to dedicated private methods.
+        GLOBAL EXPLANATION: Generates explanation for the entire model behavior
+        WORKFLOW: Validate → Create → Check Compatibility → Explain → Visualize
 
-        WIZARD FLOW:
-        1. Display project info (dataset type, model type)
-        2. Check for compatible explainers (if none, exit)
-        3. User selects an explainer from the compatible list
-        4. User selects/confirms an instance to explain
-        5. Execute the explanation and visualize results
+        This method retrieves an explainer class by its name, initializes it with the provided model
+        and dataset, and checks compatibility between the explainer, model, and dataset. If compatible,
+        it generates the global explanation and optionally visualizes it if the explainer supports
+        visualization.
 
-        Each step can be cancelled by the user, causing a graceful exit.
+        Parameters:
+        explainer_name: str
+            The name of the explainer to be used for explaining the model.
+        model
+            The machine learning model to be explained.
+        dataset
+            The dataset used for generating explanations.
+        Raises:
+        KeyError
+            If the specified explainer name is not registered.
+        ValueError
+            If the explainer is not compatible with the given model and dataset types.
+        Returns:
+        The global explanation generated by the explainer.
         """
-        logger.info("Starting FAIR-XAI Explainer Wizard")
-        print("\n=== FAIR-XAI EXPLAINER WIZARD ===")
+        # Step 1: Validate that explainer is registered
+        self._validate_explainer_exists(explainer_name)
 
-        # STEP 1: Show dataset and model types to user
-        self._display_project_info()
+        # Step 2: Create explainer instance with model and dataset
+        explainer = self._create_explainer(explainer_name, model, dataset)
 
-        # STEP 2: Get list of compatible explainers
-        compatible = self.list_compatible_explainers()
-        if not compatible:
-            # Early exit if no compatible explainers found
-            logger.warning("No compatible explainers found for current dataset and model")
-            print("No compatible explainers found.")
-            return
+        # Step 3: Validate compatibility between explainer, model, and dataset
+        self._validate_compatibility(explainer_name, explainer, model, dataset)
 
-        # STEP 3: User selects an explainer from the compatible list
-        explainer_cls = self._select_explainer(compatible)
-        if explainer_cls is None:
-            # User cancelled or invalid selection - exit wizard
-            return
+        # Step 4: Generate the global explanation for the model
+        logger.info(f"Generating global explanation using '{explainer_name}'")
+        explanation = explainer.explain_global()
 
-        # STEP 4: User selects/confirms an instance to explain
-        instance = self._select_instance()
-        if instance is None:
-            # User cancelled instance selection - exit wizard
-            return
+        # Step 5: Visualize if the explainer supports it
+        self._visualize_if_supported(explainer, explanation)
 
-        # STEP 5: Execute the explanation and display results
-        self._execute_explanation(explainer_cls, instance)
+        return explanation
 
-    def _display_project_info(self):
+    # ============================================================================
+    # PRIVATE HELPER METHODS - Validation, Creation, and Utility Functions
+    # ============================================================================
+
+    def _validate_explainer_exists(self, explainer_name: str) -> None:
         """
-        Displays information about the project's dataset and model.
+        Validates that the explainer with the given name is registered.
 
-        Prints the dataset type and model type to the console.
-
-        WIZARD STEP 1: Inform the user about current project configuration
+        Args:
+            explainer_name (str): The name of the explainer to validate.
+        Raises:
+            KeyError: If the explainer is not registered.
         """
-        # Retrieve dataset and model types using getattr with fallback to 'Unknown'
-        dataset_type = getattr(self.project.dataset, 'type', 'Unknown')
-        model_type = getattr(self.project.blackbox, 'type', 'Unknown')
-        logger.debug(f"Project info - Dataset type: {dataset_type}, Model type: {model_type}")
+        # Check if explainer name exists in the registry
+        if explainer_name not in self.explainers:
+            raise KeyError(f"Explainer '{explainer_name}' not registered")
 
-        # Display to console for user visibility
-        print(f"Dataset type: {dataset_type}")
-        print(f"Model type: {model_type}\n")
-
-    def _select_explainer(self, compatible: List[str]) -> Type[GenericExplainerAdapter]:
+    def _create_dataset(self, data: Any, dataset_type: str, class_name: str = None):
         """
-        Shows compatible explainers and allows the user to select one.
+        Creates and returns a dataset instance using the DatasetFactory class. The dataset
+        is initialized based on the provided data, dataset type, and optionally, a class name.
 
-        Parameters
-        ----------
-        compatible : List[str]
-            List of compatible explainer names.
+        Parameters:
+            data: Any
+                The input data to be passed to the factory for creating the dataset.
+            dataset_type: str
+                The type of dataset to be created.
+            class_name: str, optional
+                The optional class name to specify the dataset structure.
 
-        Returns
-        -------
-        Type[GenericExplainerAdapter] or None
-            The selected explainer class, or None if selection fails.
+        Returns:
+            Dataset
+                A dataset instance created by the DatasetFactory.
 
-        WIZARD STEP 3: Present compatible explainers and get user selection
+        Raises:
+            This method may raise exceptions if the dataset creation process fails or if
+            invalid parameters are provided.
         """
-        # Display numbered list of compatible explainers
-        print("Compatible explainers:")
-        for i, name in enumerate(compatible):
-            print(f"  [{i}] {name}")
+        dataset = DatasetFactory.create(data=data, dataset_type=dataset_type, class_name=class_name)
+        return dataset
 
-        try:
-            # Prompt user to enter the index of desired explainer
-            idx = int(input("\nSelect explainer → "))
-
-            # Validate the selected index is within valid range
-            if idx < 0 or idx >= len(compatible):
-                logger.warning(f"Invalid explainer index selected: {idx}")
-                print("Invalid index.")
-                return None
-
-            # Retrieve the selected explainer name and find its class
-            selected_name = compatible[idx]
-            logger.info(f"User selected explainer: {selected_name}")
-            return self._get_explainer_class(selected_name)
-        except (ValueError, IndexError) as e:
-            # Handle non-numeric input or index errors
-            logger.error(f"Error in explainer selection: {e}")
-            print("Invalid selection.")
-            return None
-
-    def _get_explainer_class(self, explainer_name: str) -> Type[GenericExplainerAdapter]:
+    def _create_explainer(self, name: str, model, dataset) -> GenericExplainerAdapter:
         """
-        Retrieves the explainer class given its name.
+        Creates and returns an instance of a specific explainer class associated with the given name.
+        This method retrieves the explainer class from the `explainers` dictionary using the provided
+        name and then initializes it with the given model and dataset.
 
-        Parameters
-        ----------
-        explainer_name : str
-            Name of the explainer to retrieve.
+        Arguments:
+            name: str
+                The name identifying the explainer class to create.
+            model
+                The model to be explained. Type is inferred from the context.
+            dataset
+                The dataset associated with the model. Type is inferred from the context.
 
-        Returns
-        -------
-        Type[GenericExplainerAdapter]
-            The corresponding explainer class.
+        Returns:
+            GenericExplainerAdapter
+                An instance of the explainer class initialized with the given model and dataset.
         """
-        # Search through project explainers and return the one matching the given name
-        return next(e for e in self.project.explainers if e.__name__ == explainer_name)
+        explainer_cls = self.explainers[name]  # Type[GenericExplainerAdapter]
+        return explainer_cls(model=model, dataset=dataset)  # returns an instance of the explainer
 
-    def _select_instance(self) -> Any:
+    def _validate_compatibility(self, explainer_name: str, explainer: GenericExplainerAdapter,
+                                model, dataset) -> None:
         """
-        Shows an example instance and requests user confirmation.
+        Validates compatibility of the provided explainer with the given model and dataset.
 
-        Displays the first row of the dataset as an example and asks
-        the user to confirm if they want to explain this instance.
+        This method checks if the specified explainer adapter is compatible with the given
+        dataset and model by comparing their type names. Compatibility is determined using
+        the `is_compatible` method of the provided explainer.
 
-        Returns
-        -------
-        Any or None
-            The selected instance if confirmed, None otherwise.
+        Args:
+            explainer_name: Name of the explainer as a string.
+            explainer: Object of type GenericExplainerAdapter, responsible for verifying compatibility.
+            model: The machine learning model to be checked for compatibility.
+            dataset: The dataset to be checked for compatibility.
 
-        WIZARD STEP 4: Present an example instance and get user confirmation
+        Raises:
+            ValueError: If the explainer is not compatible with the given dataset and model.
         """
-        print("\nExample instance to explain (first row of dataset):")
+        # Extract type names and convert to lowercase for comparison
+        dataset_type = type(dataset).__name__.lower()
+        model_type = type(model).__name__.lower()
 
-        # Get the first row from the dataset as the example instance
-        instance = self.project.dataset.df.iloc[0]
-        print(instance)
+        # Check compatibility using the explainer's is_compatible method
+        if not explainer.is_compatible(dataset_type, model_type):
+            raise ValueError(
+                f"Explainer '{explainer_name}' not compatible with {dataset_type} and {model_type}"
+            )
+        logger.info(f"Compatibility check passed: '{explainer_name}' ✓ {dataset_type} ✓ {model_type}")
 
-        # Ask user for confirmation to proceed with this instance
-        confirm = input("\nDo you want to explain this instance? [y/N] ")
-        if confirm.lower() != "y":
-            # User declined - cancel the wizard
-            logger.info("User cancelled instance selection")
-            print("Cancelled.")
-            return None
-
-        # User confirmed - proceed with this instance
-        logger.info("Instance confirmed for explanation")
-        return instance
-
-    def _execute_explanation(self, explainer_cls: Type[GenericExplainerAdapter], instance: Any):
+    def _visualize_if_supported(self, explainer: GenericExplainerAdapter, explanation) -> None:
         """
-        Executes the explainer on the selected instance and displays results.
+        Visualizes the explanation if the given explainer supports visualization.
 
-        Parameters
-        ----------
-        explainer_cls : Type[GenericExplainerAdapter]
-            The explainer class to execute.
-        instance : Any
-            The instance to explain.
+        The method checks if the provided explainer has a "visualize" method by using
+        duck typing. If the method is available, it invokes the "visualize" method of
+        the explainer with the provided explanation. Otherwise, a message indicating
+        lack of visualization support is printed.
 
-        WIZARD STEP 5: Run the selected explainer on the confirmed instance
+        Parameters:
+            explainer: GenericExplainerAdapter
+                The explainer object to be used for visualizing the explanation. It
+                should have an attribute or method named "visualize" to support
+                visualization.
+            explanation
+                The explanation data to be visualized. The specific type and structure
+                of this data depend on the explainer being used.
+
+        Returns:
+            None
         """
-        logger.info(f"Executing explainer: {explainer_cls.__name__}")
-        print("\nExecuting explainer...")
-
-        # Call the core run_explainer method which generates and visualizes the explanation
-        self.run_explainer(explainer_cls, instance)
-
-        logger.info("Explanation completed successfully")
-        print("\nExplanation completed.")
+        # Check if the explainer has a visualize method (duck typing)
+        if hasattr(explainer, "visualize"):
+            logger.info(f"Visualizing explanation with {explainer.explainer_name}")
+            explainer.visualize(explanation)
+        else:
+            logger.error(f"Explainer does not support visualization")

@@ -6,24 +6,14 @@ from fairxai.logger import logger
 
 class GenericExplainerAdapter(ABC):
     """
-    Generic interface for all explainer adapters.
+    Abstract base class for implementing generic explainer adapters.
 
-    Each adapter must adapt an external explainer (e.g., LORE, LIME, SHAP)
-    to a common interface, providing standardized methods for generating
-    local and global explanations.
-
-    Attributes
-    ----------
-    explainer_name : str
-        Identifier name of the explainer.
-    supported_datasets : list
-        List of supported dataset types. Use "*" to support all types.
-    supported_models : list
-        List of supported model types. Use "*" to support all types.
-    model : object
-        Machine learning model to be explained.
-    dataset : object
-        Dataset used for explanations.
+    This class provides a standardized structure for creating explanation strategies
+    for machine learning models. It defines abstract methods for generating instance-specific
+    (local) explanations and global explanations of a model. It also includes methods
+    for determining compatibility with specific datasets and models and building a
+    generic explanation structure. The class serves as a framework for subclasses
+    to implement their own logic for interpretable machine learning purposes.
     """
 
     # Constants for explainer names and compatibility
@@ -40,14 +30,15 @@ class GenericExplainerAdapter(ABC):
 
     def __init__(self, model, dataset):
         """
-        Initialize the adapter with a model and a dataset.
+        Initializes the instance with the given machine learning model and dataset.
 
-        Parameters
-        ----------
-        model : object
-            Machine learning model to be explained.
-        dataset : object
-            Dataset used to generate explanations.
+        Attributes:
+        model (Any): The machine learning model used for explanation.
+        dataset (Any): The dataset associated with the explanations.
+
+        Args:
+        model: The machine learning model to be explained.
+        dataset: The dataset on which the model operates.
         """
         self.model = model
         self.dataset = dataset
@@ -62,29 +53,27 @@ class GenericExplainerAdapter(ABC):
     @abstractmethod
     def explain_instance(self, instance):
         """
-        Generate an explanation for a single instance.
+        Represents an abstract method to explain a specific instance of data.
 
-        Parameters
-        ----------
-        instance : object
-            The instance to be explained.
+        Methods:
+            explain_instance: Abstract method to be implemented by subclasses, used
+            to explain or provide details about a specific instance.
 
-        Returns
-        -------
-        GenericExplanation
-            Object containing the instance explanation.
+        Args:
+            instance: The instance of data that needs to be explained. Its specifics
+            depend on the implementing subclass.
         """
         pass
 
     @abstractmethod
     def explain_global(self):
         """
-        Generate a global explanation of the model.
+        An abstract method to provide global interpretation or explanation for a model's predictions.
+        This method is part of an interpretability framework, ensuring that all implementing
+        classes define their own logic for global explanation.
 
-        Returns
-        -------
-        GenericExplanation
-            Object containing the global model explanation.
+        Raises:
+            NotImplementedError: If the subclass does not implement this method.
         """
         pass
 
@@ -95,19 +84,19 @@ class GenericExplainerAdapter(ABC):
     @classmethod
     def is_compatible(cls, dataset_type: str, model_type: str) -> bool:
         """
-        Verify compatibility between dataset type and model type.
+        Checks compatibility between the dataset type and model type.
 
-        Parameters
-        ----------
-        dataset_type : str
-            Dataset type to verify.
-        model_type : str
-            Model type to verify.
+        Detailed evaluation to determine whether the provided dataset type and model type
+        are supported and compatible with the current implementation of the class. This is
+        evaluated based on internal compatibility checks for both dataset and model types.
 
-        Returns
-        -------
-        bool
-            True if both dataset and model are compatible, False otherwise.
+        Args:
+            dataset_type: The type of the dataset to be analyzed for compatibility.
+            model_type: The type of the model to be analyzed for compatibility.
+
+        Returns:
+            A boolean value indicating whether the provided dataset type and model type
+            are compatible.
         """
         is_dataset_compatible = cls._is_dataset_compatible(dataset_type)
         is_model_compatible = cls._is_model_compatible(model_type)
@@ -116,34 +105,35 @@ class GenericExplainerAdapter(ABC):
     @classmethod
     def _is_dataset_compatible(cls, dataset_type: str) -> bool:
         """
-        Check if the dataset type is supported.
+        Determines whether a given dataset type is compatible with the class.
 
-        Parameters
-        ----------
-        dataset_type : str
-            Dataset type to verify.
+        This method checks if the provided dataset type is supported by the
+        class based on its `supported_datasets` attribute or if the `WILDCARD`
+        placeholder is present in the supported datasets.
 
-        Returns
-        -------
+        Parameters:
+        dataset_type: str
+            The type of the dataset to check compatibility for.
+
+        Returns:
         bool
-            True if the dataset is supported, False otherwise.
+            True if the dataset type is compatible, False otherwise.
         """
         return dataset_type in cls.supported_datasets or cls.WILDCARD in cls.supported_datasets
 
     @classmethod
     def _is_model_compatible(cls, model_type: str) -> bool:
         """
-        Check if the model type is supported.
+        Checks if the given model type is compatible with the class.
 
-        Parameters
-        ----------
-        model_type : str
-            Model type to verify.
+        This method verifies whether the provided model type is supported
+        by the class, either explicitly or through a wildcard definition.
 
-        Returns
-        -------
-        bool
-            True if the model is supported, False otherwise.
+        Args:
+            model_type: A string representing the type of the model to be checked.
+
+        Returns:
+            bool: True if the model type is compatible, otherwise False.
         """
         return model_type in cls.supported_models or cls.WILDCARD in cls.supported_models
 
@@ -155,19 +145,19 @@ class GenericExplainerAdapter(ABC):
             self, data: dict, explanation_type: str = LOCAL_EXPLANATION
     ) -> GenericExplanation:
         """
-        Build a GenericExplanation object from raw explainer data.
+        Builds and returns a generic explanation object based on provided data and explanation type.
 
-        Parameters
-        ----------
-        data : dict
-            Dictionary containing the explanation data.
-        explanation_type : str, optional
-            Type of explanation: "local" or "global" (default: "local").
+        The method is used to create and configure a GenericExplanation object by utilizing
+        the provided data and explanation type. This encapsulates explanation information,
+        including the name of the explainer, type of explanation, and the associated data.
 
-        Returns
-        -------
-        GenericExplanation
-            Object containing the formatted explanation.
+        Args:
+            data (dict): The data to be included in the explanation object.
+            explanation_type (str, optional): The type of explanation to be created.
+                Defaults to LOCAL_EXPLANATION.
+
+        Returns:
+            GenericExplanation: An object containing the explanation details.
         """
         return GenericExplanation(
             explainer_name=self.explainer_name,

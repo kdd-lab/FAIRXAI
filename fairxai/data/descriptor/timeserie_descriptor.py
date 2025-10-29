@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .base_descriptor import BaseDatasetDescriptor
+from fairxai.data.descriptor.base_descriptor import BaseDatasetDescriptor
 
 
 class TimeSeriesDatasetDescriptor(BaseDatasetDescriptor):
@@ -28,7 +28,7 @@ class TimeSeriesDatasetDescriptor(BaseDatasetDescriptor):
         """
         # Check that the data is a pandas DataFrame
         if not isinstance(self.data, pd.DataFrame):
-            raise TypeError("TimeSeriesDatasetDescriptor richiede un pandas.DataFrame")
+            raise TypeError("TimeSeriesDatasetDescriptor requires a pandas.DataFrame")
 
         # Initialize the description dictionary with basic information
         desc = {

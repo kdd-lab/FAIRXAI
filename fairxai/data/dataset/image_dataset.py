@@ -1,6 +1,6 @@
-from . import Dataset
 from fairxai.data.descriptor.image_descriptor import ImageDatasetDescriptor
 from fairxai.logger import logger
+from . import Dataset
 
 
 class ImageDataset(Dataset):
@@ -36,6 +36,5 @@ class ImageDataset(Dataset):
             dict: The updated descriptor of the image dataset.
         """
         logger.info("Descriptor creation for image dataset")
-        descriptor = ImageDatasetDescriptor(self.data).describe()
-        self.set_descriptor(descriptor)
+        self.descriptor = ImageDatasetDescriptor(self.data).describe()
         return self.descriptor
