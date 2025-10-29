@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from fairxai.data.descriptor.image_descriptor import ImageDatasetDescriptor
 
 

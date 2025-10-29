@@ -15,15 +15,17 @@ class GuidedExplanationWizard:
     It is interface-agnostic and can use CLI or GUI handlers for user interaction.
     """
 
-    def __init__(self, explainer_manager: ExplainerManager, io_handler):
+    def __init__(self, io_handler):
         """
-        Initialize the wizard with an explainer manager and an I/O handler.
+        Represents a class responsible for managing explanations and handling input/output operations.
 
-        Args:
-            explainer_manager: Instance of ExplainerManager responsible for explainer management.
-            io_handler: Object providing user interaction (e.g., CLIHandler, GUIHandler).
+        Attributes:
+        manager (ExplainerManager): An instance of ExplainerManager for handling explanation-related tasks.
+        io (Any): Input/output handler used for processing input/output operations.
+        state (dict): Maintains the state information related to the class usage and its processing.
+
         """
-        self.manager = explainer_manager
+        self.manager = ExplainerManager()
         self.io = io_handler
         self.state = {}
 

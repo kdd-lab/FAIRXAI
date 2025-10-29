@@ -5,7 +5,7 @@ class GenericExplanation:
     This class serves as a base for handling explanation data provided by different
     explainers. It allows the storage, serialization, summarization, and visualization
     of explanatory information. Explanation types can either be local or global, as defined
-    by the constants. Subclasses can extend its functionality, particularly by implementing
+    by the constants. Subclasses can extend their functionality, particularly by implementing
     the visualization logic.
     """
 

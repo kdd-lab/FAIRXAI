@@ -1,23 +1,58 @@
-from typing import List, Dict, Type, Any
+from typing import List, Type, Any
 
 from fairxai.data.dataset.dataset_factory import DatasetFactory
 from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
 from fairxai.logger import logger
 
 
-class ExplainerManager:
+class SingletonExplainerManager(type):
     """
-    Manages a collection of explainer adapters for machine learning models,
-    enabling registration, retrieval, compatibility checks, and support for
-    both instance-level and global explanations.
+    Metaclass that implements the Singleton design pattern.
 
-    This class centralizes the management of explainers that adhere to the
-    `GenericExplainerAdapter` interface. It supports tasks such as registering
-    new explainer classes, retrieving explainers by name, checking their compatibility
-    with specific dataset and model types, and generating explanations either for
-    individual data instances or for entire models. The flexibility of this manager
-    ensures that various explainers can be seamlessly integrated and utilized
-    across a range of machine learning workflows.
+    This metaclass ensures that a class using it can only have one instance. If an
+    instance exists, it returns the existing instance; otherwise, it creates a new
+    one.
+
+    Attributes:
+        _instances (dict): Dictionary to store the single instances of classes
+            using this metaclass.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        """
+        Handles the creation of singleton instances for classes. Ensures that only one
+        instance of a class exists and provides a global point of access to it.
+
+        Parameters:
+            cls: The class for which the instance needs to be created.
+            *args: Positional arguments to be passed to the class constructor.
+            **kwargs: Keyword arguments to be passed to the class constructor.
+
+        Returns:
+            The singleton instance of the class.
+
+        Raises:
+            Does not explicitly raise any error but can propagate exceptions raised
+            by the class constructor.
+        """
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class ExplainerManager(metaclass=SingletonExplainerManager):
+    """
+    Manages the registration, initialization, and use of explainer classes.
+
+    This class serves as a central registry for managing explainer classes that
+    extend the `GenericExplainerAdapter`. It provides functionality for registering
+    new explainer classes, retrieving and initializing them, as well as managing
+    the generation of explanations for individual instances or global analyses.
+
+    Additionally, this class ensures compatibility between explainers, models, and
+    datasets, making it a robust framework for handling various explanation needs.
     """
 
     def __init__(self):
@@ -113,7 +148,8 @@ class ExplainerManager:
         logger.info(f"Found {len(compatible)} compatible explainer(s) for {dataset_type} + {model_type}")
         return compatible
 
-    def explain_instance(self, explainer_name: str, model, data: Any, dataset_type: str, instance, class_name: str = None):
+    def explain_instance(self, explainer_name: str, model, data: Any, dataset_type: str, instance,
+                         class_name: str = None):
         """
         Generates an explanation for a single instance using a specified explainer.
 
@@ -266,8 +302,6 @@ class ExplainerManager:
         """
         explainer_cls = self.explainers[name]  # Type[GenericExplainerAdapter]
         return explainer_cls(model=model, dataset=dataset)  # returns an instance of the explainer
-
-
 
     def _validate_compatibility(self, explainer_name: str, explainer: GenericExplainerAdapter,
                                 model, dataset) -> None:
