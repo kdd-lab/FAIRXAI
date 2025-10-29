@@ -7,8 +7,12 @@ class TabularDatasetDescriptor:
     Handles the description of a tabular dataset by categorizing its columns into
     categorical, ordinal, and numeric types and providing summary statistics.
 
-    This class accepts a dataset and optional lists of column names representing
-    categorical and ordinal data. It provides methods to describe the dataset, retrieve
+    This class requires **explicit declaration** of all non-numeric columns through
+    the `categorical_columns` and `ordinal_columns` parameters. Columns not listed
+    there and not recognized as numeric (based on their dtype) will raise a
+    `ValueError` during the description process.
+
+    It provides methods to describe the dataset, retrieve
     specific column types, and export the computed descriptions as a dictionary.
 
     Attributes:

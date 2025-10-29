@@ -1,9 +1,9 @@
-sphinx_rtd_theme~=1.2.0
+sphinx_rtd_theme==3.0.2
 sphinx_material
-sphinx~=5.0
-shap==0.48.0
+sphinx==8.2.3
+shap==0.49.1
 lime==0.2.0.1
-torchcam==0.4.0
+torchcam==0.4.1
 anchor-exp==0.0.2.0
 #git+https://github.com/kdd-lab/LORE_sa.git@main
 #git+https://github.com/fspinna/lasts.git@main
@@ -14,6 +14,8 @@ anchor-exp==0.0.2.0
 #git+https://github.com/samueletonati/Counterfactual-Ensembles-For-Churn-Prediction.git@main
 #git+https://github.com/calathea21/IFAC.git@main
 pandas==2.3.3
-numpy==2.2.6
-setuptools==68.2.0
-pillow==11.3.0
+numpy==1.26.4
+setuptools==80.9.0
+pillow==12.0.0
+pytest==8.4.2
+pytest-cov==7.0.0
