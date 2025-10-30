@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
 
+version="0.1"
 setup(
     name="fairxai",
-    version="0.1",
+    version=version,
     author="Kode srl",
     description="fairxai is a platform developed within the Future Artificial Intelligence in Research (FAIR) initiative, designed to support the composition, execution, and explanation of modular AI decision-making processes.",
     long_description=open("README.md").read(),
