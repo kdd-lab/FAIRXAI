@@ -58,7 +58,8 @@ class DatasetFactory:
 
         if dataset_type == "tabular":
             # Explicitly handle tabular datasets (requires column type hints)
-            return dataset_class(data=data, class_name=class_name, categorical_columns=categorical_columns, ordinal_columns=ordinal_columns)
+            return dataset_class(data=data, class_name=class_name, categorical_columns=categorical_columns,
+                                 ordinal_columns=ordinal_columns)
 
         # For all other dataset types, use the standard constructor
         return dataset_class(data, class_name=class_name)

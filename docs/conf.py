@@ -16,13 +16,17 @@ author = 'Kode'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-
-extensions = ["sphinx.ext.autodoc",
-              "sphinx.ext.coverage",
-              'sphinx.ext.viewcode',
-              "sphinx.ext.napoleon", 'sphinx.ext.duration',
-              'sphinx.ext.autosummary'
-              ]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    'sphinx.ext.duration',
+    "sphinx.ext.viewcode",
+    "sphinx.ext.graphviz",
+    "sphinx.ext.inheritance_diagram",
+    "sphinxcontrib.mermaid",
+]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -32,13 +36,23 @@ master_doc = 'index'
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-autodoc_default_options = {"members": True, "inherited-members": True}
+# Automatic generation of table of contents and documentation
 autosummary_generate = True
-autoclass_content = 'class'
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+}
+
+# Include class and constructor docstrings
+autoclass_content = "both"
+
+# UML diagrams options
+inheritance_graph_attrs = dict(rankdir="TB", size='"6.0, 8.0"')
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
 html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,

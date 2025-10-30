@@ -99,6 +99,7 @@ def test_get_class_values_returns_unique_values(sample_data):
     # Then it should return unique target values
     assert set(class_values) == {0, 1}
 
+
 def test_get_feature_names_and_index(sample_data):
     # Given a TabularDataset with numeric and categorical columns
     dataset = TabularDataset(sample_data, class_name='target', categorical_columns=['gender'])
@@ -115,6 +116,7 @@ def test_get_feature_names_and_index(sample_data):
 
     # Then it should return a valid feature name
     assert first_feature_name in feature_names
+
 
 def test_get_class_values_raises_exception_if_no_class_name(sample_data):
     # Given a TabularDataset with no class_name
@@ -157,6 +159,7 @@ def test_get_feature_names_includes_target(sample_data):
     assert "target" in feature_names
     assert set(feature_names) == {"age", "income", "gender", "target"}
 
+
 def test_get_number_of_features_excludes_target(sample_data):
     # Given a dataset with 3 features + 1 target
     dataset = TabularDataset(
@@ -170,6 +173,7 @@ def test_get_number_of_features_excludes_target(sample_data):
 
     # Then the result should exclude the target column
     assert n_features == 3
+
 
 def test_get_number_of_features_includes_target(sample_data):
     # Given the same dataset

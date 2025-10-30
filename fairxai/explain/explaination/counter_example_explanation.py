@@ -29,6 +29,8 @@ class CounterExampleExplanation(GenericExplanation):
         Display counter-examples in a tabular format.
         """
 
+        # FIXME: per immagini voglio vedere immagine e controesempio accanto
+
         examples = self.data.get("counter_examples", [])
         if not examples:
             print("[INFO] No counter examples available.")

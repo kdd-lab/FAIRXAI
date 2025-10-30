@@ -16,6 +16,8 @@ class GenericExplainerAdapter(ABC):
     to implement their own logic for interpretable machine learning purposes.
     """
 
+    # TODO: GradCam, LORE, SHAP (NTH: PivotTree, Abele)
+
     # Constants for explainer names and compatibility
     explainer_name = "generic"
     supported_datasets = []

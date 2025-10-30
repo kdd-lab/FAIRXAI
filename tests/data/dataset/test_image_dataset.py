@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from fairxai.data.dataset.image_dataset import ImageDataset
 from fairxai.data.descriptor.image_descriptor import ImageDatasetDescriptor
