@@ -7,4 +7,5 @@ Unlike traditional explainable AI tools that focus on individual models, FAIRXAI
 
 The platform empowers users to build transparent, traceable AI workflows that are aligned with the needs of scientific research, regulatory clarity, and human interpretability. FAIRXAI is the toolbox for making the next generation of AI systems not only powerful — but understandable.
 
+## Documntation
 
