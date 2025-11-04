@@ -25,3 +25,4 @@ sphinxcontrib-mermaid==1.0.0
 graphviz==0.21
 pylint==4.0.2
 pydeps==3.0.1
+PyYAML==6.0.3
