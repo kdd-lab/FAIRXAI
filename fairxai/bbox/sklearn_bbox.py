@@ -1,42 +1,37 @@
 import os
-from typing import Optional, Any
-
 import joblib
-
+from typing import Optional, Any, Type
 from fairxai.bbox import AbstractBBox
 from fairxai.logger import logger
 
 
-# =============================================
-# SklearnBBox: Wrapper for scikit-learn models
-# =============================================
 class SklearnBBox(AbstractBBox):
     """
-    Adapter for scikit-learn-like models.
-
-    This wrapper allows any scikit-learn classifier/regressor
-    to be used as an AbstractBBox in the framework.
-    It supports pre-trained models, saving/loading from file,
-    and provides predict/predict_proba methods.
+    Wrapper for scikit-learn models to unify interface with AbstractBBox.
+    This adapter handles trained models, saving/loading, and prediction methods.
     """
 
-    def __init__(self, model: Optional[Any] = None, model_type: str = "sklearn_generic",
-                 model_name: str = "sklearn_model"):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        model_type: str = "sklearn_generic",
+        model_name: str = "sklearn_model"
+    ):
         """
         Initialize the wrapper.
 
         Args:
-            model: Optional scikit-learn trained model instance.
-            model_type: Logical type of the model for compatibility checks.
-            model_name: Name of the model (used for tracking/registry).
+            model: Optional scikit-learn model instance.
+            model_type: Logical model type (e.g., 'sklearn_random_forest').
+            model_name: Optional name for tracking.
         """
         super().__init__()
         self.model = model
         self.model_type = model_type
-        self.model_name = model_name
         self.framework = "sklearn"
+        self.model_name = model_name
 
-        if model is not None:
+        if self.model is not None:
             logger.info(f"SklearnBBox wrapping existing model '{model_name}'")
         else:
             logger.warning(f"SklearnBBox initialized without a model instance. Load or assign model before use.")
@@ -64,7 +59,7 @@ class SklearnBBox(AbstractBBox):
     # ---------------------------
     def save(self, path: str):
         """
-        Save the model to disk using joblib.
+        Save the entire sklearn model to disk.
 
         Args:
             path: File path to save the model.
@@ -74,14 +69,25 @@ class SklearnBBox(AbstractBBox):
         joblib.dump(self.model, path)
         logger.info(f"SklearnBBox model '{self.model_name}' saved to {path}")
 
-    def load(self, path: str):
+    def load(self, path: str, expected_cls: Optional[Type] = None):
         """
-        Load a model from disk using joblib.
+        Load the sklearn model from disk and optionally validate its type.
 
         Args:
-            path: File path to load the model from.
+            path: Path to the .pkl or .joblib file.
+            expected_cls: Optional expected model class (for validation).
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model file '{path}' does not exist.")
-        self.model = joblib.load(path)
-        logger.info(f"SklearnBBox model '{self.model_name}' loaded from {path}")
+
+        loaded_model = joblib.load(path)
+
+        # Optional: safety check
+        if expected_cls is not None and not isinstance(loaded_model, expected_cls):
+            raise TypeError(
+                f"Loaded model type '{type(loaded_model).__name__}' does not match expected type '{expected_cls.__name__}'."
+            )
+
+        self.model = loaded_model
+        logger.info(f"SklearnBBox model '{self.model_name}' loaded from {path} "
+                    f"({type(self.model).__name__})")
