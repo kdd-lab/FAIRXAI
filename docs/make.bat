@@ -1,30 +1,38 @@
 @ECHO OFF
+REM ================================================
+REM  Sphinx documentation build script for Windows
+REM  Cross-compatible with the Python script setup
+REM ================================================
 
 pushd %~dp0
 
-REM Command file for Sphinx documentation
-
+REM If SPHINXBUILD is not defined, use default
 if "%SPHINXBUILD%" == "" (
-	set SPHINXBUILD=sphinx-build
+    set SPHINXBUILD=sphinx-build
 )
-set SOURCEDIR=.
-set BUILDDIR=_build
 
+REM Match the folder structure used in generate_docs.py
+set SOURCEDIR=source
+set BUILDDIR=build
+
+REM Check if sphinx-build is available
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
-	echo.
-	echo.The 'sphinx-build' command was not found. Make sure you have Sphinx
-	echo.installed, then set the SPHINXBUILD environment variable to point
-	echo.to the full path of the 'sphinx-build' executable. Alternatively you
-	echo.may add the Sphinx directory to PATH.
-	echo.
-	echo.If you don't have Sphinx installed, grab it from
-	echo.https://www.sphinx-doc.org/
-	exit /b 1
+    echo.
+    echo The 'sphinx-build' command was not found.
+    echo Make sure you have Sphinx installed and available in PATH,
+    echo or set the SPHINXBUILD environment variable to point to it.
+    echo.
+    echo To install Sphinx, run:
+    echo     pip install sphinx
+    echo.
+    exit /b 1
 )
 
+REM If no argument is given, print help
 if "%1" == "" goto help
 
+REM Run sphinx-build with the requested target
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 goto end
 

@@ -1,234 +1,272 @@
+#!/usr/bin/env python3
 """
-Automatic documentation generator for a Python project (cross-platform)
-Generates:
- - .rst API files (Sphinx autodoc)
- - UML class diagrams (Pyreverse)
- - Dependency graph (pydeps)
- - Usage overview
- - Workflow diagram (Mermaid)
- - HTML docs build
-
-Author: Kode (FairXAI)
+Automatic documentation generator for the FAIRXAI framework.
+Generates Sphinx .rst sources, UML/Dependency diagrams, and updates index.rst.
+Compatible with Windows, Linux, and macOS.
 """
 
-import ast
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
-# === CONFIGURATION ===
-PROJECT_NAME = "FairXAI"
-SOURCE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SOURCE_DIR.parent / "fairxai"  # FAIRXAI/fairxai
-DOCS_SOURCE = SOURCE_DIR / "source"
-DOCS_BUILD = SOURCE_DIR / "build" / "html"
-STATIC_DIR = DOCS_SOURCE / "_static"
-
-os.makedirs(STATIC_DIR, exist_ok=True)
-
-
-# === UTILITIES ===
-
-def run_command(cmd: list[str], cwd=None):
-    """Run a subprocess cross-platform and stream stdout."""
-    print(f"\n> {' '.join(cmd)}")
-    process = subprocess.Popen(
-        cmd, cwd=cwd,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
-    )
-    for line in process.stdout:
-        print(line, end="")
-    process.wait()
-    if process.returncode != 0:
-        raise RuntimeError(f"⚠️ Command failed: {' '.join(cmd)}")
+# Configuration
+PROJECT_NAME = "FAIRXAI"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent / "fairxai"
+DOCS_ROOT = Path(__file__).resolve().parent
+SOURCE_DIR = DOCS_ROOT / "source"
+BUILD_DIR = DOCS_ROOT / "build"
+API_REF_FILE = SOURCE_DIR / "api_reference.rst"
+INDEX_FILE = SOURCE_DIR / "index.rst"
 
 
-def check_graphviz():
-    """Check if Graphviz is installed and accessible."""
-    print("\n[0] Checking Graphviz...")
-    result = shutil.which("dot")
-    if not result:
-        print("""
-⚠️ Graphviz not found!
-Please install it to generate UML and dependency diagrams:
+# Utility functions
+def run_command(cmd, cwd=None):
+    """Run a shell command and raise an error if it fails."""
+    print(f"\n> {' '.join(str(c) for c in cmd)}")
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
 
-Windows  → https://graphviz.org/download/
-macOS    → brew install graphviz
-Linux    → sudo apt install graphviz
+    if result.returncode != 0:
+        print(result.stdout)
+        print(result.stderr)
+        raise RuntimeError(f"Command failed: {' '.join(str(c) for c in cmd)}")
 
-Then restart your terminal.
-""")
+    print(result.stdout)
+    return result
+
+
+def safe_remove(path):
+    if path.exists():
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+
+
+def find_executable(name):
+    """Return the path of an executable if available in venv/system PATH."""
+    suffix = ".exe" if os.name == "nt" else ""
+    for p in os.environ["PATH"].split(os.pathsep):
+        exe_path = Path(p) / f"{name}{suffix}"
+        if exe_path.exists():
+            return exe_path
+    return None
+
+
+# Step 1: Generate .rst via sphinx-apidoc
+def generate_apidoc():
+    print("\n[1] Generating .rst files via sphinx-apidoc...")
+    safe_remove(SOURCE_DIR / "fairxai")
+    SOURCE_DIR.mkdir(exist_ok=True, parents=True)
+
+    cmd = [
+        sys.executable,
+        "-m", "sphinx.ext.apidoc",
+        "-o", str(SOURCE_DIR),
+        str(PROJECT_ROOT)
+    ]
+    if not run_command(cmd):
+        raise RuntimeError("Failed to run sphinx-apidoc.")
+
+
+# Step 2: Generate diagrams (optional)
+def generate_diagrams():
+    print("\n[2] Generating dependency and UML diagrams (optional)...")
+
+    pydeps_exec = find_executable("pydeps")
+    pyreverse_exec = find_executable("pyreverse")
+
+    diagrams_dir = SOURCE_DIR / "_static" / "diagrams"
+    diagrams_dir.mkdir(parents=True, exist_ok=True)
+
+    # ---- PYDEPS ----
+    if pydeps_exec:
+        print("  -> Generating dependency graph with pydeps...")
+        output_svg = diagrams_dir / "dependencies.svg"
+        cmd = [
+            "pydeps",
+            str(PROJECT_ROOT),
+            "--max-bacon", "3",
+            "--show-deps",
+            "--noshow",
+            f"--output={output_svg}",  # compatibile anche con Windows
+            "--format=svg"
+        ]
+        run_command(cmd)
     else:
-        print(f"✅ Graphviz found at: {result}")
+        print("  pydeps not found — skipping dependency diagram")
+
+    # ---- PYREVERSE ----
+    if pyreverse_exec:
+        print("  -> Generating UML with pyreverse...")
+        with tempfile.TemporaryDirectory() as tmp:
+            run_command([
+                "pyreverse",
+                "-f", "ALL",
+                "-A", "-S",
+                "-o", "dot",
+                "-p", PROJECT_NAME,
+                str(PROJECT_ROOT)
+            ])
+            for dot in Path(".").glob("classes_*.dot"):
+                shutil.move(dot, diagrams_dir / dot.name)
+    else:
+        print("  pyreverse not found — skipping UML diagram")
 
 
-# === STEP 1: sphinx-apidoc ===
-def generate_sphinx_apidoc():
-    print("\n[1] Generating .rst files with sphinx-apidoc...")
-    run_command([
-        sys.executable, "-m", "sphinx.ext.apidoc",
-        "-f", "-o", str(DOCS_SOURCE), str(PROJECT_ROOT)
-    ])
+# Step 3: Create single-page API reference
+def generate_api_reference():
+    print("\n[3] Creating API reference page...")
+
+    content = f"""
+{PROJECT_NAME} API Reference
+{'=' * (len(PROJECT_NAME) + 15)}
+
+.. toctree::
+   :maxdepth: 4
+   :glob:
+
+   fairxai*
+    """.strip()
+
+    API_REF_FILE.write_text(content, encoding="utf-8")
+    print(f"Created: {API_REF_FILE}")
 
 
-# === STEP 2: UML diagrams (Pyreverse) ===
+def ensure_additional_docs():
+    """Ensure 'usage.rst' and 'workflow.rst' exist to avoid Sphinx errors."""
+    print("\n[4] Ensuring additional .rst files are present...")
 
-def generate_pyreverse():
-    print("\n[2] Generating UML class diagrams with Pyreverse...")
-    uml_dir = STATIC_DIR / "uml"
-    os.makedirs(uml_dir, exist_ok=True)
+    additional_files = {
+        "usage.rst": """\
+Usage
+=====
 
-    # Directory da escludere durante la scansione
-    EXCLUDED_DIRS = {
-        'venv', '.venv', 'env', '.env',  # Virtual environments
-        'docs', 'doc', '_build', 'build',  # Documentation
-        '__pycache__', '.pytest_cache', '.tox',  # Cache
-        '.git', '.svn', '.hg',  # Version control
-        'node_modules', 'dist', 'egg-info',  # Build artifacts
-        'tests', 'test'  # Test directories (opzionale)
-    }
+This section describes how to use the FAIRXAI framework.
 
-    # Create one diagram per top-level package to keep it readable
-    for root, dirs, files in os.walk(PROJECT_ROOT):
-        # Filtra le directory da escludere in-place
-        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS and not d.startswith('.')]
-
-        if "__init__.py" in files:
-            # Verifica che siamo effettivamente in un package del progetto principale
-            rel_path = Path(root).relative_to(PROJECT_ROOT)
-
-            # Salta se siamo in una sottodirectory esclusa
-            if any(part in EXCLUDED_DIRS for part in rel_path.parts):
-                continue
-
-            package_name = Path(root).name
-            package_uml_dir = uml_dir / package_name
-            os.makedirs(package_uml_dir, exist_ok=True)
-
-            # Cambia la directory corrente per l'output
-            original_dir = os.getcwd()
-
-            try:
-                # Sposta nella directory di output prima di eseguire pyreverse
-                os.chdir(str(package_uml_dir))
-
-                # Usa il formato DOT invece di PNG (più affidabile e nativo)
-                # oppure usa 'dot' che è il formato Graphviz standard
-                run_command([
-                    "pyreverse",
-                    "-o", "dot",  # Usa formato DOT nativo invece di PNG
-                    "-p", package_name,
-                    "-A",  # Mostra tutti i membri
-                    "-S",  # Mostra anche i metodi statici
-                    root  # Path del package da analizzare
-                ])
-
-                print(f"✅ Generated UML for {package_name}")
-
-            except Exception as e:
-                print(f"⚠️  Warning: Could not generate diagram for {package_name}: {e}")
-            finally:
-                # Ripristina sempre la directory originale
-                os.chdir(original_dir)
-
-    print(f"✅ UML diagrams saved to {uml_dir}")
-
-
-# === STEP 3: Dependency graph (pydeps) ===
-def generate_pydeps():
-    print("\n[3] Generating dependency graph with pydeps...")
-    dep_path = STATIC_DIR / "dependencies.svg"
-    run_command([
-        "pydeps", str(PROJECT_ROOT),
-        "--max-bacon", "3", "--show-deps",
-        "--noshow", "--output", str(dep_path)
-    ])
-    print(f"✅ Dependency graph saved to {dep_path}")
-
-
-# === STEP 4: Generate usage.rst automatically ===
-def extract_symbols(path: Path):
-    with open(path, "r", encoding="utf-8") as f:
-        tree = ast.parse(f.read())
-    classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-    funcs = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
-    return classes, funcs
-
-
-def generate_usage_rst():
-    print("\n[4] Generating usage.rst automatically...")
-    usage_path = DOCS_SOURCE / "usage.rst"
-
-    with open(usage_path, "w", encoding="utf-8") as f:
-        f.write("Usage and Components\n====================\n\n")
-        f.write("Overview of classes and functions automatically extracted from source.\n\n")
-
-        for root, _, files in os.walk(PROJECT_ROOT):
-            for file in files:
-                if file.endswith(".py") and not file.startswith("__"):
-                    full = Path(root) / file
-                    rel = full.relative_to(PROJECT_ROOT)
-                    classes, funcs = extract_symbols(full)
-                    if classes or funcs:
-                        f.write(f"**{rel}**\n\n")
-                        if classes:
-                            f.write("  Classes:\n")
-                            for c in classes:
-                                f.write(f"   - {c}\n")
-                        if funcs:
-                            f.write("  Functions:\n")
-                            for fn in funcs:
-                                f.write(f"   - {fn}\n")
-                        f.write("\n")
-
-    print(f"✅ usage.rst created at {usage_path}")
-
-
-# === STEP 5: Workflow diagram (Mermaid) ===
-def generate_workflow_rst():
-    print("\n[5] Generating workflow.rst (Mermaid)...")
-    workflow_path = DOCS_SOURCE / "workflow.rst"
-    content = """Workflow
+.. note::
+   Add examples of project creation, model registration, and explanation pipeline execution here.
+""",
+        "workflow.rst": """\
+Workflow
 ========
 
-High-level overview of the system workflow:
+This section illustrates the typical workflow for using FAIRXAI.
 
-.. mermaid::
-
-   graph TD
-      A[Dataset Loader] --> B[Preprocessing]
-      B --> C[Descriptor Builder]
-      C --> D[Explainer Manager]
-      D --> E[Evaluation & Reporting]
+.. note::
+   Describe the main steps:
+   1. Create a Project
+   2. Register or load a model
+   3. Run explainability pipelines
+   4. Visualize results
 """
-    with open(workflow_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    print(f"✅ workflow.rst created at {workflow_path}")
+    }
+
+    for filename, content in additional_files.items():
+        file_path = SOURCE_DIR / filename
+        if not file_path.exists():
+            print(f"  -> Creating missing file: {filename}")
+            file_path.write_text(content, encoding="utf-8")
+        else:
+            print(f"  -> {filename} already exists, skipping.")
 
 
-# === STEP 6: Build HTML ===
-def build_html():
-    print("\n[6] Building HTML documentation...")
-    run_command([
-        "sphinx-build", "-b", "html",
-        str(DOCS_SOURCE), str(DOCS_BUILD)
-    ])
-    print(f"✅ HTML documentation built at: {DOCS_BUILD}")
+# Step 4: Update index.rst
+def update_index_rst():
+    print("\n[5] Updating index.rst ...")
+
+    index_content = f"""
+.. {PROJECT_NAME} documentation master file
+
+Welcome to {PROJECT_NAME}'s documentation
+=========================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+
+   usage
+   workflow
+   api_reference
+   modules
+   indices
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+    """.strip()
+
+    INDEX_FILE.write_text(index_content, encoding="utf-8")
+    print(f"Updated: {INDEX_FILE}")
 
 
-# === MAIN ===
+def build_html_docs():
+    """
+    Build Sphinx HTML docs.
+
+    Strategy:
+    - If Makefile / make.bat present in DOCS_ROOT, use them.
+    - Otherwise fall back to calling sphinx-build via Python module (cross-platform).
+    """
+    # Use DOCS_ROOT and BUILD_DIR defined at top of your script
+    docs_root = DOCS_ROOT  # already defined in your script
+    source_dir = SOURCE_DIR
+    build_html_dir = BUILD_DIR / "html"
+
+    # 1) Try platform-native make
+    if os.name == "nt":
+        makefile = docs_root / "make.bat"
+        if makefile.exists():
+            try:
+                run_command(["cmd", "/c", "make.bat", "html"], cwd=docs_root)
+                print(f"HTML built at: {build_html_dir}")
+                return
+            except Exception as e:
+                print(f"make.bat failed: {e}")
+        else:
+            print("make.bat not found in docs root, falling back to sphinx-build.")
+    else:
+        makefile = docs_root / "Makefile"
+        if makefile.exists():
+            try:
+                run_command(["make", "html"], cwd=docs_root)
+                print(f"HTML built at: {build_html_dir}")
+                return
+            except Exception as e:
+                print(f"make html failed: {e}")
+        else:
+            print("Makefile not found in docs root, falling back to sphinx-build.")
+
+    # 2) Fallback: run sphinx-build via Python module (no make needed)
+    try:
+        # Ensure output directory exists
+        build_html_dir.mkdir(parents=True, exist_ok=True)
+        # Use sphinx-build module (works in venv)
+        cmd = [sys.executable, "-m", "sphinx", "-b", "html", str(source_dir), str(build_html_dir)]
+        run_command(cmd, cwd=docs_root)
+        print(f"HTML built at: {build_html_dir}")
+    except Exception as e:
+        print(f"sphinx-build fallback failed: {e}")
+        raise e
+
+
+# Main
 def main():
-    print(f"=== Generating documentation for {PROJECT_NAME} ===")
-    check_graphviz()
-    generate_sphinx_apidoc()
-    generate_pyreverse()
-    generate_pydeps()
-    generate_usage_rst()
-    generate_workflow_rst()
-    build_html()
-    print("\n=== ✅ All done! ===")
+    print(f"Starting documentation build for {PROJECT_NAME}...\n")
+
+    generate_apidoc()
+    # generate_diagrams()
+    generate_api_reference()
+    ensure_additional_docs()
+    update_index_rst()
+    build_html_docs()
+
+    print("\nDocumentation generation completed.")
 
 
 if __name__ == "__main__":

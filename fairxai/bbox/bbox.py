@@ -10,7 +10,7 @@ class AbstractBBox(ABC):
     pass
     """
 
-    def __init__(self, classifier):
+    def __init__(self):
         pass
 
     def model(self):
