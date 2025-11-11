@@ -151,6 +151,10 @@ class Project:
               mode: "local"
               params:
                 instance_index: 3
+            - explainer: "LoreExplainerAdapter"
+              mode: local
+              params:
+                strategy: "genetic"
             - explainer: "SomeGlobalExplainer"
               mode: "global"
 

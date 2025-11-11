@@ -22,11 +22,11 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
     It implements lazy initialization: the actual LORE explainer is created only when an
     explanation is requested (via `explain_instance` or `explain_global`). This design allows
     dynamic configuration of runtime parameters and keeps pipeline integration simple and efficient.
-    
+
     Key Features:
     - Lazy Initialization: The explainer is instantiated only when needed, avoiding
       unnecessary overhead and premature dependency loading.
-    - Runtime Configurability: Explanation strategies ("genetic", "random", "hybrid")
+    - Runtime Configurability: Explanation strategies ("genetic", "random", "probabilistic-genetic")
       and parameters like `num_samples` can be supplied per call, without reconstructing the adapter.
     - Pipeline-friendly: Explainer factories/managers do not need prior knowledge of
       specific strategies or parameters; the adapter handles setup internally.
@@ -65,7 +65,7 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
             explainer_cls = {
                 "genetic": TabularGeneticGeneratorLore,
                 "random": TabularRandomGeneratorLore,
-                "hybrid": TabularRandGenGeneratorLore,
+                "probabilistic-genetic": TabularRandGenGeneratorLore,
             }.get(strategy)
 
             if explainer_cls is None:
@@ -88,7 +88,7 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
         Args:
             instance: The data instance to explain. Should be compatible with the dataset used.
             params: Optional dictionary of runtime parameters, e.g.,
-                - "strategy": str, one of ["genetic", "random", "hybrid"] (default: "genetic")
+                - "strategy": str, one of ["genetic", "random", "probabilistic-genetic"] (default: "genetic")
                 - "num_samples": int, number of synthetic neighborhood samples (default: 500)
                 - other algorithm-specific parameters.
 
