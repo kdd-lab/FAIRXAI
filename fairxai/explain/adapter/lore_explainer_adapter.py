@@ -1,179 +1,177 @@
-from typing import Any, Dict, Optional
-
+from typing import Optional, Dict, Any, List
 import numpy as np
-from lore_sa import (
-    TabularGeneticGeneratorLore,
-    TabularRandomGeneratorLore,
-    TabularRandGenGeneratorLore
-)
 
-from fairxai.bbox import AbstractBBox
-from fairxai.data.dataset import TabularDataset
-from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
 from fairxai.explain.explaination.generic_explanation import GenericExplanation
+from fairxai.explain.explaination.rule_based_explanation import RuleBasedExplanation
+from fairxai.explain.explaination.counterfactual_rule_explanation import CounterfactualRuleExplanation
+from fairxai.explain.explaination.feature_importance_explanation import FeatureImportanceExplanation
+
+from lore_sa import TabularGeneticGeneratorLore, TabularRandomGeneratorLore, TabularRandGenGeneratorLore
+
 from fairxai.logger import logger
 
 
-class LoreExplainerAdapter(GenericExplainerAdapter):
+class LoreExplainerAdapter:
     """
-    LoreExplainerAdapter: Lazy Initialization and Dynamic Runtime Configuration
+    Adapter for LORE (Local Rule-Based Explanations) explainers.
 
-    This adapter wraps the LORE (Local Rule-based Explanation) algorithm for tabular datasets.
-    It implements lazy initialization: the actual LORE explainer is created only when an
-    explanation is requested (via `explain_instance` or `explain_global`). This design allows
-    dynamic configuration of runtime parameters and keeps pipeline integration simple and efficient.
+    Provides a unified interface to compute local and global explanations
+    from black-box models. The adapter lazily initializes the LORE explainer
+    only when needed, supporting multiple neighborhood generation strategies.
 
-    Key Features:
-    - Lazy Initialization: The explainer is instantiated only when needed, avoiding
-      unnecessary overhead and premature dependency loading.
-    - Runtime Configurability: Explanation strategies ("genetic", "random", "probabilistic-genetic")
-      and parameters like `num_samples` can be supplied per call, without reconstructing the adapter.
-    - Pipeline-friendly: Explainer factories/managers do not need prior knowledge of
-      specific strategies or parameters; the adapter handles setup internally.
-    - Compatible with all local/global explanation modes for tabular datasets.
+    Attributes:
+        bbox: Black-box model wrapped in AbstractBBox.
+        dataset: Dataset object with descriptor information.
+        explainer: Instance of a LORE explainer (genetic, random, or probabilistic-genetic).
+        strategy: Current neighborhood generation strategy.
     """
-
-    supported_datasets = ["tabular"]
-    supported_models = [
-        "sklearn_tree",
-        "sklearn_random_forest",
-        "sklearn_gradient_boosting",
-        "sklearn_linear",
-        "sklearn_logistic",
-        "sklearn_svm",
-        "torch_mlp",
-        "torch_generic",
-    ]
 
     DEFAULT_STRATEGY = "genetic"
 
-    def __init__(self, model: AbstractBBox, dataset: TabularDataset):
+    def __init__(self, bbox, dataset):
         """
-        Initialize the adapter (explainer will be created lazily when needed).
-        """
-        super().__init__(model, dataset)
-        self.explainer = None
-        self.strategy = None  # will be set at runtime
-
-    # --------------------------------------------------------
-    # Lazy initialization
-    # --------------------------------------------------------
-    def _init_explainer(self, strategy: str):
-        """Initialize the LORE explainer for a specific strategy."""
-        strategy = strategy.lower()
-        try:
-            explainer_cls = {
-                "genetic": TabularGeneticGeneratorLore,
-                "random": TabularRandomGeneratorLore,
-                "probabilistic-genetic": TabularRandGenGeneratorLore,
-            }.get(strategy)
-
-            if explainer_cls is None:
-                raise ValueError(f"Unknown LORE strategy '{strategy}'")
-
-            self.explainer = explainer_cls(self.model.model, self.dataset)
-            self.strategy = strategy
-            logger.info(f"Initialized LORE explainer ({explainer_cls.__name__}).")
-        except Exception as e:
-            logger.error(f"Failed to initialize LORE explainer: {e}")
-            raise
-
-    # --------------------------------------------------------
-    # Local explanation
-    # --------------------------------------------------------
-    def explain_instance(self, instance: Any, params: Optional[Dict[str, Any]] = None) -> GenericExplanation:
-        """
-        Compute a local explanation for a single dataset instance.
+        Initialize the adapter without creating the LORE explainer yet.
 
         Args:
-            instance: The data instance to explain. Should be compatible with the dataset used.
-            params: Optional dictionary of runtime parameters, e.g.,
-                - "strategy": str, one of ["genetic", "random", "probabilistic-genetic"] (default: "genetic")
-                - "num_samples": int, number of synthetic neighborhood samples (default: 500)
-                - other algorithm-specific parameters.
+            bbox: Black-box model wrapped in AbstractBBox.
+            dataset: TabularDataset containing feature descriptor and data.
+        """
+        self.bbox = bbox
+        self.dataset = dataset
+        self.explainer = None
+        self.strategy = None
+
+    # -----------------------------
+    # Internal helper methods
+    # -----------------------------
+    def _init_explainer(self, strategy: str = "genetic"):
+        """
+        Lazily initialize the LORE explainer based on the chosen strategy.
+
+        Args:
+            strategy: Neighborhood generation strategy. One of:
+                "genetic" (default), "random", "probabilistic-genetic".
+        """
+        strategy = strategy.lower()
+        if strategy == "genetic":
+            self.explainer = TabularGeneticGeneratorLore(self.bbox, self.dataset)
+        elif strategy == "random":
+            self.explainer = TabularRandomGeneratorLore(self.bbox, self.dataset)
+        elif strategy == "probabilistic-genetic":
+            self.explainer = TabularRandGenGeneratorLore(self.bbox, self.dataset)
+        else:
+            raise ValueError(f"Unknown LORE strategy: {strategy}")
+        self.strategy = strategy
+        logger.info(f"LORE explainer initialized with strategy '{strategy}'")
+
+    def _rule_to_predicates(self, rule_dict: dict) -> list[str]:
+        """
+        Convert a LORE rule dict into a list of human-readable predicates
+        for RuleBasedExplanation.
+
+        Each entry in the premise becomes its own 'IF ... THEN ...' string.
+        """
+        consequence = rule_dict.get("consequence", "Unknown")
+        predicates = []
+        for condition in rule_dict.get("premise", []):
+            predicates.append(f"IF {condition} THEN class = {consequence}")
+        return predicates
+
+    def _map_lore_to_explanations(self, lore_output: dict, explainer_name: str = "LORE") -> List[GenericExplanation]:
+        """
+        Convert raw LORE output dictionary to concrete explanation objects.
+
+        Args:
+            lore_output: Dictionary returned by LORE explainer.
+            explainer_name: Name of the explainer for tracking.
 
         Returns:
-            GenericExplanation: An object containing factual rules, counterfactuals, feature importances,
-            and fidelity scores for the instance.
+            List of GenericExplanation instances:
+                - RuleBasedExplanation
+                - CounterfactualRuleExplanation
+                - FeatureImportanceExplanation
+        """
+        rules_dict = lore_output.get("rules", {})
+
+        factual = RuleBasedExplanation(explainer_name, self._rule_to_predicates(rules_dict))
+        counterfactuals = CounterfactualRuleExplanation(explainer_name, lore_output.get("counterfactuals", []))
+        feature_importances = FeatureImportanceExplanation(explainer_name,
+                                                           dict(lore_output.get("feature_importances", {})))
+        return [factual, counterfactuals, feature_importances]
+
+    # -----------------------------
+    # Public methods
+    # -----------------------------
+    def explain_instance(self, instance: Any, params: Optional[Dict[str, Any]] = None) -> List[GenericExplanation]:
+        """
+        Compute a local explanation for a single instance.
+
+        Args:
+            instance: Input instance compatible with the dataset.
+            params: Optional runtime parameters:
+                - "strategy": str, one of ["genetic", "random", "probabilistic-genetic"]
+                - "num_samples": int, number of synthetic samples (default: 1500)
+
+        Returns:
+            List of GenericExplanation objects representing factual rules, counterfactuals,
+            and feature importances.
         """
         if params is None:
             params = {}
-
-        # Extract params
         strategy = params.get("strategy", self.DEFAULT_STRATEGY).lower()
         num_samples = params.get("num_samples", 1500)
 
-        # Initialize explainer lazily if missing or strategy changed
+        # Initialize explainer lazily or if strategy changed
         if self.explainer is None or strategy != self.strategy:
             self._init_explainer(strategy)
 
-        # Prepare instance
-        if hasattr(instance, "to_array"):
-            x = np.asarray(instance.to_array()).reshape(1, -1)
-        else:
-            x = np.asarray(instance).reshape(1, -1)
+        # Ensure instance is a 1D array
+        x = np.asarray(instance).reshape(1, -1) if not isinstance(instance, np.ndarray) else instance
 
         try:
-            explanation = self.explainer.explain_instance(x[0], num_samples=num_samples)
+            lore_output = self.explainer.explain_instance(x[0])
         except Exception as e:
             logger.error(f"LORE explanation failed: {e}")
             raise
 
-        payload = {
-            "rule": str(explanation.get("rule")),
-            "counterfactuals": explanation.get("counterfactuals", []),
-            "feature_importances": explanation.get("feature_importances", {}),
-            "fidelity": float(explanation.get("fidelity", 0.0)),
-            "strategy": strategy,
-        }
+        return self._map_lore_to_explanations(lore_output, explainer_name="LORE")
 
-        return self.build_generic_explanation(
-            data=payload, explanation_type=self.LOCAL_EXPLANATION
-        )
-
-    # --------------------------------------------------------
-    # Global explanation
-    # --------------------------------------------------------
-    def explain_global(self, params: Optional[Dict[str, Any]] = None) -> GenericExplanation:
+    def explain_global(self, instances: Any, params: Optional[Dict[str, Any]] = None) -> List[GenericExplanation]:
         """
-        Compute a global explanation by summarizing local explanations across instances.
+        Compute a global explanation for a set of instances by aggregating local explanations.
+
+        Currently, this method averages feature importances and collects unique rules
+        across the instances. Counterfactuals are not aggregated.
 
         Args:
-            params: Optional dictionary of runtime parameters, similar to `explain_instance`.
-                    Can include strategy, number of samples, or other aggregation parameters.
+            instances: Iterable of input instances.
+            params: Optional runtime parameters passed to explain_instance.
 
         Returns:
-            GenericExplanation: An object containing aggregated rules, feature importances,
-            and other global insights.
+            List of GenericExplanation objects representing global rules and feature importances.
         """
         if params is None:
             params = {}
 
-        strategy = params.get("strategy", self.DEFAULT_STRATEGY)
-        n_samples = params.get("n_samples", 10)
-        num_samples = params.get("num_samples", 1000)
+        # Aggregate rules and feature importances
+        all_rules = []
+        all_feature_importances = {}
 
-        # Lazy init (again)
-        if self.explainer is None or strategy != self.strategy:
-            self._init_explainer(strategy)
+        for instance in instances:
+            explanations = self.explain_instance(instance, params=params)
+            for exp in explanations:
+                if isinstance(exp, RuleBasedExplanation):
+                    all_rules.extend(exp.data.get("rules", []))
+                elif isinstance(exp, FeatureImportanceExplanation):
+                    for feat, imp in exp.data.items():
+                        all_feature_importances[feat] = all_feature_importances.get(feat, 0.0) + imp
 
-        explanations = []
-        for i in range(min(n_samples, len(self.dataset))):
-            instance = self.dataset[i]
-            try:
-                exp = self.explain_instance(instance, {"num_samples": num_samples, "strategy": strategy})
-                explanations.append(exp.to_dict())
-            except Exception as e:
-                logger.warning(f"Global LORE: skipped instance {i} ({e})")
+        # Normalize feature importances by number of instances
+        num_instances = len(instances)
+        averaged_importances = {feat: imp / num_instances for feat, imp in all_feature_importances.items()}
 
-        aggregated_rules = [e["data"]["rule"] for e in explanations]
+        # Build global explanation objects
+        global_rule_exp = RuleBasedExplanation("LORE", all_rules)
+        global_feature_exp = FeatureImportanceExplanation("LORE", averaged_importances, global_scope=True)
 
-        payload = {
-            "aggregated_rules": aggregated_rules,
-            "num_instances": len(explanations),
-            "strategy": strategy,
-        }
-
-        return self.build_generic_explanation(
-            data=payload, explanation_type=self.GLOBAL_EXPLANATION
-        )
+        return [global_rule_exp, global_feature_exp]

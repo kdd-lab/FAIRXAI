@@ -138,31 +138,3 @@ class GenericExplainerAdapter(ABC):
             bool: True if the model type is compatible, otherwise False.
         """
         return model_type in cls.supported_models or cls.WILDCARD in cls.supported_models
-
-    # ---------------------------
-    # Utility methods
-    # ---------------------------
-
-    def build_generic_explanation(
-            self, data: dict, explanation_type: str = LOCAL_EXPLANATION
-    ) -> GenericExplanation:
-        """
-        Builds and returns a generic explanation object based on provided data and explanation type.
-
-        The method is used to create and configure a GenericExplanation object by utilizing
-        the provided data and explanation type. This encapsulates explanation information,
-        including the name of the explainer, type of explanation, and the associated data.
-
-        Args:
-            data (dict): The data to be included in the explanation object.
-            explanation_type (str, optional): The type of explanation to be created.
-                Defaults to LOCAL_EXPLANATION.
-
-        Returns:
-            GenericExplanation: An object containing the explanation details.
-        """
-        return GenericExplanation(
-            explainer_name=self.explainer_name,
-            explanation_type=explanation_type,
-            data=data
-        )
