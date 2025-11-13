@@ -1,29 +1,46 @@
 import argparse
-
-from setup import version
-
+import os
+import subprocess
+from importlib.metadata import version
+try:
+    PACKAGE_VERSION = version("fairxai")
+except Exception:
+    # Fallback/caso di sviluppo se il pacchetto non è ancora installato
+    PACKAGE_VERSION = "0.0.0 (Not Installed)"
 
 def main():
     #########################################
     # create the top-level parser
     #########################################
-    parser = argparse.ArgumentParser(prog='fairxai', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-v", "--version", help="Installed gemini version",
-                        action="version", version="%(prog)s " + version)
+    parser = argparse.ArgumentParser(prog="fairxai", description="FAIRXAI command-line interface")
+    parser.add_argument(
+        "-v", "--version",
+        help="Show installed FAIRXAI version",
+        action="version",
+        version=f"%(prog)s {PACKAGE_VERSION}"
+    )
     subparsers = parser.add_subparsers(title='[sub-commands]', dest='command')
 
     #########################################
-    # $ fairxai browser
+    # $ fairxai app
     #########################################
-    parser_browser = subparsers.add_parser('browser', help='Browser interface to FAIRXAI')
-    parser_browser.add_argument('--host', metavar='host', default='localhost', help='Hostname, default: localhost.')
-    parser_browser.add_argument('--port', metavar='port', default='8088', help='Port, default: 8088.')
+    parser_app = subparsers.add_parser('app', help='Launch the FAIRXAI Streamlit WebApp')
 
-    def browser_fn(parser, args):
-        browser.browser_main(parser, args)
+    def app_fn(parser, args):
+        app_path = os.path.join(os.path.dirname(__file__), "app", "app.py")
+        subprocess.run(["streamlit", "run", app_path])
 
-    parser_browser.set_defaults(func=browser_fn)
+    parser_app.set_defaults(func=app_fn)
 
+
+    #########################################
+    # Parse and execute
+    #########################################
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        return
+    args.func(parser, args)
 
 if __name__ == "__main__":
     main()
