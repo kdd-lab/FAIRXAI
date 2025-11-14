@@ -1,8 +1,7 @@
 import streamlit as st
-from pathlib import Path
-import webbrowser
 
-from fairxai.app import home_page, explainability_page, doc_page
+from fairxai.app import home_page, doc_page
+from fairxai.app.explainability import explainability_page
 
 
 def app_main():
