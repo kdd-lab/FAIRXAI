@@ -11,12 +11,14 @@ def create_project_page():
 
     st.markdown("Compila i parametri per iniziare un nuovo progetto di spiegabilità.")
 
-    workspace = st.text_input("Workspace directory",value=os.path.expanduser("~/fairxai_workspace"))
+    workspace_path = os.path.abspath(os.path.normpath(os.path.join(os.getcwd(), "..","..","workspace")))
 
-    uploaded_file = st.file_uploader("Carica dataset (CSV)", type=["csv"])
-    dataset_type = st.selectbox("Tipo di dataset", ["tabular","image"])
-    model_name = st.selectbox("Modello", ["xgboost", "random_forest", "logreg"])
-    target = st.text_input("Target variable (opzionale)")
+    dataset_type = st.selectbox("Tipo di dataset", ["tabular", "image"])
+    model_name = st.text_input("Nome del modello", "dummy_model")
+    target = st.text_input("Variabile target (solo per tabular)", "")
+
+    uploaded_file = st.file_uploader("Carica dataset", type=["csv"])
+    params_str = st.text_area("Parametri del modello (JSON)", value="{}")
 
     if st.button("Crea progetto"):
 
@@ -26,16 +28,15 @@ def create_project_page():
 
         df = pd.read_csv(uploaded_file)
 
-        # salva temporaneamente il dataset per passarne il path al Project
         temp_path = tempfile.mktemp(suffix=".csv")
         df.to_csv(temp_path, index=False)
 
-        registry = ProjectRegistry(workspace)
+        registry = ProjectRegistry(workspace_path)
         project = Project(
             data=temp_path,
             dataset_type=dataset_type,
             model_name=model_name,
-            workspace_path=workspace,
+            workspace_path=workspace_path,
             target_variable=target
         )
 
