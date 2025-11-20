@@ -1,6 +1,7 @@
+import os
+from typing import Optional, List, Any, Union
 import pandas as pd
-
-__all__ = ["TabularDataset"]
+from pandas import DataFrame, Series
 
 from fairxai.data.dataset import Dataset
 from fairxai.data.descriptor.tabular_descriptor import TabularDatasetDescriptor
@@ -13,45 +14,50 @@ class TabularDataset(Dataset):
     and ordinal columns, setting a target column, and computing descriptive
     metadata for the dataset.
 
-    This class allows initialization from various data sources such as a DataFrame,
-    CSV, or dictionary. It provides functionality to maintain, update, and describe
-    dataset attributes. Features include moving the target column, extracting
-    distinct target values, retrieving feature names, and more.
+    This class allows initialization from:
+        - a pandas DataFrame
+        - a CSV file path
+        - a dictionary of arrays/lists
 
     Attributes:
-        categorical_columns: list
-            A list of column names in the dataset that are categorized as
-            categorical.
-        ordinal_columns: list
-            A list of column names in the dataset that are categorized as ordinal.
+        categorical_columns: list of column names considered categorical
+        ordinal_columns: list of column names considered ordinal
     """
 
-    def __init__(self, data: pd.DataFrame, class_name: str = None,
-                 categorical_columns: list = None, ordinal_columns: list = None):
+    def __init__(self, data: Any, class_name: str = None,
+                 categorical_columns: Optional[List[str]] = None,
+                 ordinal_columns: Optional[List[str]] = None):
         """
-        Initializes an object with a given dataset, specifies the class/target column,
-        and optionally sets categorical and ordinal column attributes. Provides the
-        capability to compute a descriptor and handle the target column separately.
+        Initializes TabularDataset from any supported data type.
 
-        Parameters:
-            data (pd.DataFrame): The dataset to be utilized.
-            class_name (str, optional): The name of the target column. Defaults to None.
-            categorical_columns (list, optional): A list of categorical column names.
-                                                  Defaults to None.
-            ordinal_columns (list, optional): A list of ordinal column names.
-                                               Defaults to None.
-
-        Raises:
-            ValueError: If an error occurs while computing the descriptor.
+        data can be:
+            - DataFrame
+            - CSV file path
+            - dict of arrays/lists
+            - list of dicts (records)
         """
-        super().__init__(data=data, class_name=class_name)
+        # --- Convert input to DataFrame ---
+        if isinstance(data, pd.DataFrame):
+            df = data
+        elif isinstance(data, str) and os.path.exists(data) and data.lower().endswith(".csv"):
+            df = pd.read_csv(data, skipinitialspace=True, na_values='?', keep_default_na=True)
+        elif isinstance(data, dict):
+            df = pd.DataFrame(data)
+        elif isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            df = pd.DataFrame(data)
+        else:
+            raise TypeError(
+                f"Cannot build TabularDataset from type '{type(data)}'. "
+                "Supported types: DataFrame, CSV path, dict, list[dict]."
+            )
 
-        # Move the target column to the end (optional)
+        super().__init__(data=df, class_name=class_name)
+
+        # Move target column to the end
         if class_name is not None and class_name in self.data.columns:
             cols = [c for c in self.data.columns if c != class_name] + [class_name]
             self.data = self.data[cols]
 
-        # Store optional column type hints
         self.categorical_columns = categorical_columns or []
         self.ordinal_columns = ordinal_columns or []
 
@@ -61,33 +67,19 @@ class TabularDataset(Dataset):
         except ValueError as e:
             raise ValueError(e)
 
-        # Extract target if defined
+        # Extract target
         if self.class_name in self.data.columns:
             self.target = self.data[self.class_name]
         else:
             self.target = None
 
-    def update_descriptor(self, categorical_columns: list = None, ordinal_columns: list = None):
+    # -------------------------
+    # Descriptor update
+    # -------------------------
+    def update_descriptor(self, categorical_columns: Optional[List[str]] = None,
+                          ordinal_columns: Optional[List[str]] = None):
         """
-        Updates the tabular dataset descriptor based on the provided categorical and ordinal
-        columns. If no columns are provided, existing categorical and ordinal columns will
-        be used by default. This method computes the descriptor for the dataset and updates
-        the current instance descriptor.
-
-        Args:
-            categorical_columns: list, optional
-                A list of columns to be treated as categorical. If not provided, the stored
-                categorical columns will be used.
-            ordinal_columns: list, optional
-                A list of columns to be treated as ordinal. If not provided, the stored
-                ordinal columns will be used.
-
-        Raises:
-            ValueError: Raised if there is an error computing the descriptor due to invalid
-            column values or other data-related issues.
-
-        Returns:
-            The computed and updated dataset descriptor.
+        Updates the tabular dataset descriptor.
         """
         categorical_columns = categorical_columns or self.categorical_columns
         ordinal_columns = ordinal_columns or self.ordinal_columns
@@ -105,14 +97,15 @@ class TabularDataset(Dataset):
         logger.info("Tabular dataset descriptor created.")
         return self.descriptor
 
-    # -------------------------------------------------------------------------
-    # Convenience methods
-    # -------------------------------------------------------------------------
+    # -------------------------
+    # Convenience constructors
+    # -------------------------
     @classmethod
     def from_csv(cls, filename: str, class_name: str = None, dropna: bool = True,
-                 categorical_columns: list = None, ordinal_columns: list = None):
+                 categorical_columns: Optional[List[str]] = None,
+                 ordinal_columns: Optional[List[str]] = None):
         """
-        Load a CSV file into a TabularDataset.
+        Load CSV file into TabularDataset
         """
         df = pd.read_csv(filename, skipinitialspace=True, na_values='?', keep_default_na=True)
         if dropna:
@@ -127,22 +120,20 @@ class TabularDataset(Dataset):
 
     @classmethod
     def from_dict(cls, data: dict, class_name: str = None,
-                  categorical_columns: list = None, ordinal_columns: list = None):
+                  categorical_columns: Optional[List[str]] = None,
+                  ordinal_columns: Optional[List[str]] = None):
         """
-        Create a TabularDataset from a dictionary of arrays or lists.
+        Create a TabularDataset from a dictionary of arrays or lists
         """
         df = pd.DataFrame(data)
         return cls(df, class_name=class_name,
                    categorical_columns=categorical_columns,
                    ordinal_columns=ordinal_columns)
 
+    # -------------------------
+    # Feature / target helpers
+    # -------------------------
     def get_class_values(self):
-        """
-        Return the list of distinct target values.
-
-        Raises:
-            Exception: If class_name is not defined.
-        """
         if not self.class_name:
             raise Exception("ERR: class_name is None. Use set_class_name('<column name>') first.")
 
@@ -155,41 +146,19 @@ class TabularDataset(Dataset):
         raise KeyError(f"Target column '{self.class_name}' not found in dataset or descriptor.")
 
     def get_feature_names(self, include_target: bool = False):
-        """
-        Return all feature names (numeric + categorical + ordinal).
-
-        By default, excludes the target column from the feature list.
-        Set include_target=True to include it.
-
-        Returns:
-            list[str]: List of feature names.
-        """
         names = []
         for section in ['numeric', 'categorical', 'ordinal']:
             names.extend(self.descriptor.get(section, {}).keys())
 
-        # Remove the target column if present and not requested
         if not include_target and self.class_name in names:
             names.remove(self.class_name)
 
         return names
 
     def get_number_of_features(self, include_target: bool = False):
-        """
-        Return the total number of features.
-
-        By default, excludes the target column from the count.
-        """
         return len(self.get_feature_names(include_target=include_target))
 
     def get_feature_name(self, index: int):
-        """
-        Retrieve a feature name by its index.
-
-        Raises:
-            IndexError: If no feature matches the given index.
-        """
-
         for section in ['numeric', 'categorical', 'ordinal']:
             for name, info in self.descriptor.get(section, {}).items():
                 if info.get('index') == index:

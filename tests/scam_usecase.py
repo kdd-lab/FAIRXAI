@@ -35,9 +35,9 @@ DATA = os.path.join(WORKSPACE_BASE, "usecase_scam_test.csv")
 DATASET_TYPE = "tabular"                   # "tabular" | "image" | "text"
 MODEL_NAME = "scam-pls"
 MODEL_PARAMS = None
-MODEL_PATH = os.path.join(PROJECT_ROOT, "scam_pls.pkl")
+MODEL_PATH = os.path.join(WORKSPACE_BASE, "usecase_scam_model.pkl")
 TARGET_VARIABLE = "target"
-PIPELINE_YAML_LOCAL = os.path.join(PROJECT_ROOT, "scam_usecase.yaml")
+PIPELINE_YAML_LOCAL = os.path.join(WORKSPACE_BASE, "scam_example_pipeline.yaml")
 CATEGORICAL_COLUMNS=["target_name", "type", "sample_name", "group"]
 ORDINAL_COLUMNS=["group_id", "sample_id", "target_id", "type_id", "timestamp"]
 

@@ -109,32 +109,19 @@ class GenericExplainerAdapter(ABC):
         """
         Determines whether a given dataset type is compatible with the class.
 
-        This method checks if the provided dataset type is supported by the
-        class based on its `supported_datasets` attribute or if the `WILDCARD`
-        placeholder is present in the supported datasets.
-
-        Parameters:
-        dataset_type: str
-            The type of the dataset to check compatibility for.
-
-        Returns:
-        bool
-            True if the dataset type is compatible, False otherwise.
+        Normalizes input to lowercase before comparison to support consistent matching.
         """
-        return dataset_type in cls.supported_datasets or cls.WILDCARD in cls.supported_datasets
+        dataset_type = dataset_type.lower()
+        supported = [d.lower() for d in cls.supported_datasets]
+        return dataset_type in supported or cls.WILDCARD in supported
 
     @classmethod
     def _is_model_compatible(cls, model_type: str) -> bool:
         """
         Checks if the given model type is compatible with the class.
 
-        This method verifies whether the provided model type is supported
-        by the class, either explicitly or through a wildcard definition.
-
-        Args:
-            model_type: A string representing the type of the model to be checked.
-
-        Returns:
-            bool: True if the model type is compatible, otherwise False.
+        Normalizes input to lowercase before comparison to support consistent matching.
         """
-        return model_type in cls.supported_models or cls.WILDCARD in cls.supported_models
+        model_type = model_type.lower()
+        supported = [m.lower() for m in cls.supported_models]
+        return model_type in supported or cls.WILDCARD in supported

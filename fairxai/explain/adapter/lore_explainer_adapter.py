@@ -1,17 +1,19 @@
 from typing import Optional, Dict, Any, List
+
 import numpy as np
-
-from fairxai.explain.explaination.generic_explanation import GenericExplanation
-from fairxai.explain.explaination.rule_based_explanation import RuleBasedExplanation
-from fairxai.explain.explaination.counterfactual_rule_explanation import CounterfactualRuleExplanation
-from fairxai.explain.explaination.feature_importance_explanation import FeatureImportanceExplanation
-
 from lore_sa import TabularGeneticGeneratorLore, TabularRandomGeneratorLore, TabularRandGenGeneratorLore
 
+from fairxai.bbox import AbstractBBox
+from fairxai.data.dataset import TabularDataset
+from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
+from fairxai.explain.explaination.counterfactual_rule_explanation import CounterfactualRuleExplanation
+from fairxai.explain.explaination.feature_importance_explanation import FeatureImportanceExplanation
+from fairxai.explain.explaination.generic_explanation import GenericExplanation
+from fairxai.explain.explaination.rule_based_explanation import RuleBasedExplanation
 from fairxai.logger import logger
 
 
-class LoreExplainerAdapter:
+class LoreExplainerAdapter(GenericExplainerAdapter):
     """
     Adapter for LORE (Local Rule-Based Explanations) explainers.
 
@@ -27,16 +29,21 @@ class LoreExplainerAdapter:
     """
 
     DEFAULT_STRATEGY = "genetic"
+    explainer_name = "LoreExplainer"
+    supported_datasets = ["tabular"]
+    supported_models = ["sklearn_pls", "sklearn_tree", "sklearn_random_forest", "sklearn_gradient_boosting",
+                        "sklearn_linear", "sklearn_logistic", "sklearn_svm", "sklearn_knn"]
 
-    def __init__(self, bbox, dataset):
+    def __init__(self, model: AbstractBBox, dataset:TabularDataset):
         """
         Initialize the adapter without creating the LORE explainer yet.
 
         Args:
-            bbox: Black-box model wrapped in AbstractBBox.
+            model: Black-box model wrapped in AbstractBBox.
             dataset: TabularDataset containing feature descriptor and data.
         """
-        self.bbox = bbox
+        super().__init__(model, dataset)
+        self.bbox = model
         self.dataset = dataset
         self.explainer = None
         self.strategy = None
