@@ -20,5 +20,10 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.9',  # or whatever your minimum Python version is
+    python_requires='>=3.9',
+    entry_points={
+        'console_scripts': [
+            'fairxai=fairxai.main:main',
+        ],
+    },
 )
