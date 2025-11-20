@@ -1,10 +1,11 @@
 from numpy import number
 from pandas import DataFrame, Series
 
+from fairxai.data.descriptor.base_descriptor import BaseDatasetDescriptor
 from fairxai.logger import logger
 
 
-class TabularDatasetDescriptor:
+class TabularDatasetDescriptor(BaseDatasetDescriptor):
     """
     Handles the description of a tabular dataset by categorizing its columns into
     categorical, ordinal, and numeric types and providing summary statistics.
@@ -40,6 +41,7 @@ class TabularDatasetDescriptor:
     """
 
     def __init__(self, data: DataFrame, categorical_columns: list = None, ordinal_columns: list = None):
+        super().__init__(data)
         self.data = data
         self.categorical_columns = categorical_columns or []
         self.ordinal_columns = ordinal_columns or []

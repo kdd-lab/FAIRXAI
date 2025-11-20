@@ -109,60 +109,19 @@ class GenericExplainerAdapter(ABC):
         """
         Determines whether a given dataset type is compatible with the class.
 
-        This method checks if the provided dataset type is supported by the
-        class based on its `supported_datasets` attribute or if the `WILDCARD`
-        placeholder is present in the supported datasets.
-
-        Parameters:
-        dataset_type: str
-            The type of the dataset to check compatibility for.
-
-        Returns:
-        bool
-            True if the dataset type is compatible, False otherwise.
+        Normalizes input to lowercase before comparison to support consistent matching.
         """
-        return dataset_type in cls.supported_datasets or cls.WILDCARD in cls.supported_datasets
+        dataset_type = dataset_type.lower()
+        supported = [d.lower() for d in cls.supported_datasets]
+        return dataset_type in supported or cls.WILDCARD in supported
 
     @classmethod
     def _is_model_compatible(cls, model_type: str) -> bool:
         """
         Checks if the given model type is compatible with the class.
 
-        This method verifies whether the provided model type is supported
-        by the class, either explicitly or through a wildcard definition.
-
-        Args:
-            model_type: A string representing the type of the model to be checked.
-
-        Returns:
-            bool: True if the model type is compatible, otherwise False.
+        Normalizes input to lowercase before comparison to support consistent matching.
         """
-        return model_type in cls.supported_models or cls.WILDCARD in cls.supported_models
-
-    # ---------------------------
-    # Utility methods
-    # ---------------------------
-
-    def build_generic_explanation(
-            self, data: dict, explanation_type: str = LOCAL_EXPLANATION
-    ) -> GenericExplanation:
-        """
-        Builds and returns a generic explanation object based on provided data and explanation type.
-
-        The method is used to create and configure a GenericExplanation object by utilizing
-        the provided data and explanation type. This encapsulates explanation information,
-        including the name of the explainer, type of explanation, and the associated data.
-
-        Args:
-            data (dict): The data to be included in the explanation object.
-            explanation_type (str, optional): The type of explanation to be created.
-                Defaults to LOCAL_EXPLANATION.
-
-        Returns:
-            GenericExplanation: An object containing the explanation details.
-        """
-        return GenericExplanation(
-            explainer_name=self.explainer_name,
-            explanation_type=explanation_type,
-            data=data
-        )
+        model_type = model_type.lower()
+        supported = [m.lower() for m in cls.supported_models]
+        return model_type in supported or cls.WILDCARD in supported
