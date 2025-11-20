@@ -24,7 +24,7 @@ class Project:
             self,
             data: Any,
             dataset_type: str,
-            model_name: str,
+            model_type: str,
             workspace_path: str,
             target_variable: Optional[str] = None,
             categorical_columns: Optional[List[str]] = None,
@@ -47,7 +47,7 @@ class Project:
         self.id = str(uuid.uuid4())
         self.created_at = datetime.now()
         self.dataset_type = dataset_type
-        self.model_type = model_name
+        self.model_type = model_type
         self.workspace_path = os.path.join(workspace_path, self.id)
 
         # Create the workspace structure
@@ -64,10 +64,10 @@ class Project:
             categorical_columns=categorical_columns,
             ordinal_columns=ordinal_columns,
         )
-        self.blackbox = ModelFactory.create(model_name, model_params, model_path=model_path)
+        self.blackbox = ModelFactory.create(model_type, model_params, model_path=model_path)
 
         # Discover compatible explainers for this dataset/model pair
-        self.explainer_manager = ExplainerManager(dataset_type, model_name)
+        self.explainer_manager = ExplainerManager(dataset_type, model_type)
         self.explainers: List[Type[GenericExplainerAdapter]] = (
             self.explainer_manager.list_available_compatible_explainers()
         )

@@ -13,7 +13,7 @@ class ExplainerManager:
     factory method to instantiate one by name.
     """
 
-    def __init__(self, dataset_type: str, model_name: str):
+    def __init__(self, dataset_type: str, model_type: str):
         """
         Initializes the manager for a specific dataset type and model name.
 
@@ -21,7 +21,7 @@ class ExplainerManager:
             dataset_type: The type of dataset (e.g., 'tabular', 'image', 'text').
             model_name: The name of the model (e.g., 'MyBBoxModelA').
         """
-        self.dataset_type, self.model_name = self._normalize_type_names(dataset_type, model_name)
+        self.dataset_type, self.model_name = self._normalize_type_names(dataset_type, model_type)
         self.explainers: dict[str, Type[GenericExplainerAdapter]] = {}
         self._load_compatible_explainers()
 

@@ -46,7 +46,6 @@ class ModelFactory:
     def create(
         cls,
         model_type: str,
-        model_name: Optional[str] = None,
         model_instance: Any = None,
         model_params: Optional[Dict[str, Any]] = None,
         model_path: Optional[str] = None,
@@ -57,7 +56,6 @@ class ModelFactory:
 
         Args:
             model_type: Logical model type (must exist in _model_registry)
-            model_name: Optional name for tracking / registry
             model_instance: Optional pre-trained model instance
             model_params: Optional dictionary of parameters to initialize model
             model_path: Optional file path to load pre-trained model
@@ -78,9 +76,9 @@ class ModelFactory:
         # Wrapper initialization
         # -----------------------
         if issubclass(wrapper_cls, SklearnBBox):
-            bbox = wrapper_cls(model=model_instance, model_type=key, model_name=model_name)
+            bbox = wrapper_cls(model=model_instance, model_type=key)
         elif issubclass(wrapper_cls, TorchBBox):
-            bbox = wrapper_cls(model=model_instance, model_type=key, model_name=model_name, device=device)
+            bbox = wrapper_cls(model=model_instance, model_type=key, device=device)
         else:
             raise ValueError(f"Unsupported wrapper class '{wrapper_cls.__name__}'")
 
