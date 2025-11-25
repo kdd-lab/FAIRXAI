@@ -66,7 +66,7 @@ class TabularDataset(Dataset):
         # --- Extract target (if present) and keep features-only DataFrame ---
         if self.class_name is not None and self.class_name in df.columns:
             # Extract target series and remove column from df to keep feature columns stable
-            self._target: Optional[Series] = df[self.class_name].copy()
+            self._target: Optional[Series] = df[self.class_name]
             df = df.drop(columns=[self.class_name])
         else:
             self._target = None
@@ -123,13 +123,11 @@ class TabularDataset(Dataset):
         ordinal_columns = [c for c in (ordinal_columns or []) if c in self._data.columns]
 
         # Compute descriptor on feature-only DataFrame
-        descriptor = TabularDatasetDescriptor(
+        self.descriptor = TabularDatasetDescriptor(
             data=self._data,
             categorical_columns=categorical_columns,
             ordinal_columns=ordinal_columns
-        ).describe(target=self._target)
-
-        return self.descriptor
+        ).describe(target=self._target, target_name=self.class_name)
 
     # -------------------------
     # Indexing & length

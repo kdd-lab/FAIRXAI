@@ -52,7 +52,7 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
         self.ordinal = {}
         self.target_desc = None  # Holds target statistics if provided
 
-    def describe(self, target: Series = None) -> dict:
+    def describe(self, target: Series = None, target_name:str = None) -> dict:
         """
         Compute column descriptors for numeric, categorical, and ordinal features.
 
@@ -82,11 +82,13 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
                     self.numeric[feature] = self._create_numeric_description(df[feature], index)
 
             # --- Add target description if provided ---
-            if target is not None:
+            if target is not None and target_name is not None:
                 self.target_desc = {
+                    target_name: {
                     'index': len(df.columns),
                     'distinct_values': list(target.unique()),
                     'count': {x: int((target == x).sum()) for x in target.unique()}
+                    }
                 }
 
         except ValueError as e:
@@ -199,12 +201,8 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
         }
 
         # Target info is optional; only add if present
-        if hasattr(self, '_target') and self._target is not None:
-            descriptor['target'] = {
-                'index': len(self.data.columns),
-                'distinct_values': list(self._target.unique()),
-                'count': {x: int((self._target == x).sum()) for x in self._target.unique()}
-            }
+        if self.target_desc is not None:
+            descriptor['target'] = self.target_desc
 
         return descriptor
 
