@@ -31,7 +31,7 @@ os.makedirs(WORKSPACE_BASE, exist_ok=True)
 print(f"Project root: {PROJECT_ROOT}")
 print(f"Workspace base: {WORKSPACE_BASE}")
 
-DATA = os.path.join(WORKSPACE_BASE, "usecase_scam_test.csv")
+DATA = os.path.join(WORKSPACE_BASE, "usecase_scam_training.csv")
 DATASET_TYPE = "tabular"                   # "tabular" | "image" | "text"
 MODEL_NAME = "scam-pls"
 MODEL_PARAMS = None
