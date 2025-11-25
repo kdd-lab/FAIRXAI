@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any, List
 
 import numpy as np
+import pandas as pd
 from lore_sa import TabularGeneticGeneratorLore, TabularRandomGeneratorLore, TabularRandGenGeneratorLore
 
 from fairxai.bbox import AbstractBBox
@@ -132,11 +133,11 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
         if self.explainer is None or strategy != self.strategy:
             self._init_explainer(strategy)
 
-        # Ensure instance is a 1D array
-        x = np.asarray(instance).reshape(1, -1) if not isinstance(instance, np.ndarray) else instance
+        # Convert input instance to a Pandas Series so LORE can call .values on it
+        x = pd.Series(instance, index=self.dataset.get_feature_names())
 
         try:
-            lore_output = self.explainer.explain_instance(x[0])
+            lore_output = self.explainer.explain_instance(x)
         except Exception as e:
             logger.error(f"LORE explanation failed: {e}")
             raise
