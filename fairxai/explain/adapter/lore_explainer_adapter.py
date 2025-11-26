@@ -32,8 +32,23 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
     DEFAULT_STRATEGY = "genetic"
     explainer_name = "LoreExplainer"
     supported_datasets = ["tabular"]
-    supported_models = ["sklearn_pls", "sklearn_tree", "sklearn_random_forest", "sklearn_gradient_boosting",
-                        "sklearn_linear", "sklearn_logistic", "sklearn_svm", "sklearn_knn"]
+    supported_models = [
+        # Sklearn classifiers
+        "DecisionTreeClassifier",
+        "RandomForestClassifier",
+        "GradientBoostingClassifier",
+        "LogisticRegression",
+        "LinearDiscriminantAnalysis",
+        "SVC",
+        "KNeighborsClassifier",
+        # Torch classifiers
+        "MLPClassifier",
+        "CNNClassifier",
+        "RNNClassifier",
+        "LSTMClassifier",
+        "GRUClassifier",
+        "TransformerClassifier",
+    ]
 
     def __init__(self, model: AbstractBBox, dataset:TabularDataset):
         """

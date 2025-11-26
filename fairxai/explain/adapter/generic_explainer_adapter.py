@@ -122,6 +122,6 @@ class GenericExplainerAdapter(ABC):
 
         Normalizes input to lowercase before comparison to support consistent matching.
         """
-        model_type = model_type.lower()
-        supported = [m.lower() for m in cls.supported_models]
+        model_type = model_type
+        supported = [m for m in cls.supported_models]
         return model_type in supported or cls.WILDCARD in supported

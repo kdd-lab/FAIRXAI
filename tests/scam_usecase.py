@@ -12,6 +12,8 @@ import os
 import json
 from pprint import pprint
 
+import pandas as pd
+
 from fairxai.project.project import Project
 from fairxai.project.project_registry import ProjectRegistry
 
@@ -31,15 +33,18 @@ os.makedirs(WORKSPACE_BASE, exist_ok=True)
 print(f"Project root: {PROJECT_ROOT}")
 print(f"Workspace base: {WORKSPACE_BASE}")
 
-DATA = os.path.join(WORKSPACE_BASE, "usecase_scam_training.csv")
+DATA = os.path.join(WORKSPACE_BASE, "usecase_scam_class_train_clean.csv")
 DATASET_TYPE = "tabular"                   # "tabular" | "image" | "text"
-MODEL_NAME = "scam-pls"
 MODEL_PARAMS = None
-MODEL_PATH = os.path.join(WORKSPACE_BASE, "usecase_scam_model.pkl")
+MODEL_PATH = os.path.join(WORKSPACE_BASE, "usecase_scam_model_class.pkl")
 TARGET_VARIABLE = "target"
 PIPELINE_YAML_LOCAL = os.path.join(WORKSPACE_BASE, "scam_example_pipeline.yaml")
 CATEGORICAL_COLUMNS=["target_name", "type", "sample_name", "group"]
 ORDINAL_COLUMNS=["group_id", "sample_id", "target_id", "type_id", "timestamp"]
+
+df_train=pd.read_csv(DATA)
+numeric_cols = [c for c in df_train.columns if c.replace('.', '', 1).isdigit()]
+clean_train_df = df_train[numeric_cols + [TARGET_VARIABLE]]
 
 # ----------------------------------------------------
 # Create registry (singleton per workspace path)
@@ -52,9 +57,9 @@ registry = ProjectRegistry(WORKSPACE_BASE)
 print("Creating Project inside workspace/...")
 
 project = Project(
-    data=DATA,
+    data=clean_train_df,
     dataset_type=DATASET_TYPE,
-    model_type="sklearn_pls",
+    framework="sklearn",
     workspace_path=WORKSPACE_BASE,
     target_variable=TARGET_VARIABLE,
     model_params=MODEL_PARAMS,

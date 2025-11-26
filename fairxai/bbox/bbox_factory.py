@@ -1,4 +1,6 @@
 from typing import Dict, Any, Type, Optional
+from sklearn.base import BaseEstimator
+import torch.nn as nn
 
 from fairxai.bbox import AbstractBBox
 from fairxai.bbox.sklearn_bbox import SklearnBBox
@@ -7,131 +9,76 @@ from fairxai.bbox.torch_bbox import TorchBBox
 
 class ModelFactory:
     """
-    Factory for creating AbstractBBox wrappers (e.g., SklearnBBox, TorchBBox)
-    and managing registration of model types dynamically.
+    Scalable factory for creating AbstractBBox wrappers (SklearnBBox, TorchBBox, etc.)
+    based on the framework name. Supports dynamic framework registration.
 
-    This factory supports pre-registered model types and allows runtime
-    extension for custom or user-defined models.
+    This approach avoids the need for a model instance and works directly with
+    saved files (.pkl/.pth) by calling the wrapper's `load()` method.
     """
 
-    _model_registry: Dict[str, Dict[str, Any]] = {
-        # -------------------------
-        # Scikit-learn models
-        # -------------------------
-        "sklearn_tree": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_random_forest": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_gradient_boosting": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_linear": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_logistic": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_svm": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_knn": {"wrapper": SklearnBBox, "framework": "sklearn"},
-        "sklearn_pls": {"wrapper": SklearnBBox, "framework": "sklearn"},
-
-        # -------------------------
-        # PyTorch models
-        # -------------------------
-        "torch_mlp": {"wrapper": TorchBBox, "framework": "torch"},
-        "torch_cnn": {"wrapper": TorchBBox, "framework": "torch"},
-        "torch_rnn": {"wrapper": TorchBBox, "framework": "torch"},
-        "torch_lstm": {"wrapper": TorchBBox, "framework": "torch"},
-        "torch_gru": {"wrapper": TorchBBox, "framework": "torch"},
-        "torch_generic": {"wrapper": TorchBBox, "framework": "torch"},
-        "torch_transformer": {"wrapper": TorchBBox, "framework": "torch"},
+    # Registry: framework -> wrapper class + base class for validation
+    _framework_registry: Dict[str, Dict[str, Any]] = {
+        "sklearn": {"wrapper": SklearnBBox, "class": BaseEstimator},
+        "torch": {"wrapper": TorchBBox, "class": nn.Module},
     }
 
-    # ===============================================================
-    # Factory creation
-    # ===============================================================
     @classmethod
     def create(
-        cls,
-        model_type: str,
-        model_instance: Any = None,
-        model_params: Optional[Dict[str, Any]] = None,
-        model_path: Optional[str] = None,
-        device: str = "cpu",
+            cls,
+            framework: str,
+            model_path: Optional[str] = None,
+            model_params: Optional[Dict[str, Any]] = None,
+            device: str = "cpu"
     ) -> AbstractBBox:
         """
-        Instantiate a black-box model wrapper with the correct logical type and framework.
+        Instantiate the correct AbstractBBox wrapper for the given framework.
 
         Args:
-            model_type: Logical model type (must exist in _model_registry)
-            model_instance: Optional pre-trained model instance
-            model_params: Optional dictionary of parameters to initialize model
-            model_path: Optional file path to load pre-trained model
-            device: Optional device for TorchBBox ('cpu' or 'cuda')
+            framework: Name of the ML framework ('sklearn', 'torch', etc.)
+            model_path: Optional path to pre-trained model (.pkl or .pth)
+            model_params: Optional parameters to initialize the model if needed
+            device: Device for TorchBBox ('cpu' or 'cuda')
 
         Returns:
-            AbstractBBox instance with model_type and framework set
+            AbstractBBox instance with loaded model if model_path provided
+
+        Raises:
+            ValueError: if framework is unsupported or wrapper instantiation fails
         """
-        key = model_type.lower()
-        if key not in cls._model_registry:
-            raise ValueError(
-                f"Unknown model_type '{model_type}'. Supported: {list(cls._model_registry.keys())}"
-            )
+        framework = framework.lower()
+        if framework not in cls._framework_registry:
+            raise ValueError(f"Unsupported framework '{framework}'. "
+                             f"Available: {list(cls._framework_registry.keys())}")
 
-        wrapper_cls = cls._model_registry[key]["wrapper"]
+        wrapper_cls = cls._framework_registry[framework]["wrapper"]
 
-        # -----------------------
-        # Wrapper initialization
-        # -----------------------
+        # Instantiate the wrapper
         if issubclass(wrapper_cls, SklearnBBox):
-            bbox = wrapper_cls(model=model_instance, model_type=key)
+            bbox = wrapper_cls(model=None)  # model will be loaded if model_path is provided
         elif issubclass(wrapper_cls, TorchBBox):
-            bbox = wrapper_cls(model=model_instance, model_type=key, device=device)
+            bbox = wrapper_cls(model=None, device=device)
         else:
-            raise ValueError(f"Unsupported wrapper class '{wrapper_cls.__name__}'")
+            raise ValueError(f"Unsupported wrapper class {wrapper_cls}")
 
-        # -----------------------
-        # Optional loading
-        # -----------------------
+        # Load model if path provided
         if model_path:
-            if isinstance(bbox, SklearnBBox):
-                bbox.load(model_path)
-            elif isinstance(bbox, TorchBBox):
-                if model_instance is None and model_params and "model_cls" in model_params:
-                    bbox.load(model_path, model_cls=model_params["model_cls"])
-                else:
-                    bbox.load(model_path)
+            bbox.load(model_path)
 
         return bbox
 
-    # ===============================================================
-    # Dynamic registration
-    # ===============================================================
     @classmethod
-    def register_model(
-        cls,
-        model_type: str,
-        wrapper_cls: Type[AbstractBBox],
-        framework: str,
-        overwrite: bool = False,
-    ):
+    def register_framework(cls, framework_name: str, wrapper_cls: Type[AbstractBBox], base_class: Type):
         """
-        Dynamically register a new model type into the factory.
+        Dynamically register a new ML framework.
 
         Args:
-            model_type: Logical identifier (e.g., 'sklearn_xgboost')
-            wrapper_cls: Subclass of AbstractBBox (e.g., SklearnBBox)
-            framework: Framework name ('sklearn', 'torch', etc.)
-            overwrite: If True, overwrites an existing entry.
-
-        Example:
-            ModelFactory.register_model(
-                model_type="sklearn_xgboost",
-                wrapper_cls=SklearnBBox,
-                framework="sklearn"
-            )
+            framework_name: Logical name of the framework
+            wrapper_cls: Wrapper class implementing AbstractBBox
+            base_class: Base class for validation (optional)
         """
-        key = model_type.lower()
-        if key in cls._model_registry and not overwrite:
-            raise ValueError(f"Model type '{key}' already exists. Use overwrite=True to replace.")
-        cls._model_registry[key] = {"wrapper": wrapper_cls, "framework": framework}
+        cls._framework_registry[framework_name.lower()] = {"wrapper": wrapper_cls, "class": base_class}
 
-    # ===============================================================
-    # Utility
-    # ===============================================================
     @classmethod
-    def available_models(cls) -> list[str]:
-        """Returns a list of all registered model names."""
-        return list(cls._model_registry.keys())
+    def available_frameworks(cls) -> list[str]:
+        """Return all currently registered frameworks."""
+        return list(cls._framework_registry.keys())
