@@ -46,36 +46,30 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
         self.categorical_columns = categorical_columns or []
         self.ordinal_columns = ordinal_columns or []
 
-        # internal state
+        # Internal storage for column descriptions
         self.numeric = {}
         self.categorical = {}
         self.ordinal = {}
+        self.target_desc = None  # Holds target statistics if provided
 
-    def describe(self) -> dict:
+    def describe(self, target: Series = None, target_name:str = None) -> dict:
         """
-        Analyzes and describes each column in the dataset, categorizing them into
-        numerical, categorical, and ordinal types, and provides detailed summaries
-        of each type. The method iterates through all columns in the dataset,
-        determines their types, and organizes their descriptions accordingly.
+        Compute column descriptors for numeric, categorical, and ordinal features.
 
-        Returns the summarized descriptions as a dictionary format.
-
-        Raises:
-            ValueError: Raised when an error occurs during column type determination, typically
-                due to issues in data processing or invalid dataset configuration.
-
+        Args:
+            target: optional target column (Series). If provided, its summary will be
+                    included under 'target' in the returned descriptor.
 
         Returns:
-            dict: A dictionary containing structured descriptions of numeric, categorical,
-                and ordinal features extracted from the dataset.
+            dict: Descriptor dictionary including features and optional target.
         """
         df = self.data
         self.numeric.clear()
         self.categorical.clear()
         self.ordinal.clear()
+        self.target_desc = None
 
         try:
-
             for feature in df.columns:
                 index = df.columns.get_loc(feature)
                 col_type = self._get_column_type(feature, df)
@@ -86,9 +80,20 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
                     self.ordinal[feature] = self._create_categorical_description(df[feature], index)
                 else:
                     self.numeric[feature] = self._create_numeric_description(df[feature], index)
+
+            # --- Add target description if provided ---
+            if target is not None and target_name is not None:
+                self.target_desc = {
+                    target_name: {
+                    'index': len(df.columns),
+                    'distinct_values': list(target.unique()),
+                    'count': {x: int((target == x).sum()) for x in target.unique()}
+                    }
+                }
+
         except ValueError as e:
             logger.error(f"Error during column type determination: {e}")
-            raise ValueError(e)
+            raise
 
         return self._as_dict()
 
@@ -180,16 +185,24 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
         """
         return list(self.ordinal.keys())
 
-    def _as_dict(self):
+    def _as_dict(self, target: Series = None, target_name: str = None):
         """
-        Converts the object's attributes to a dictionary representation.
+        Converts the dataset descriptor to a dict.
+        Optionally adds the target if provided.
 
-        Returns:
-            dict: A dictionary containing the object's attributes mapped to
-            their corresponding values.
+        Args:
+            target: Optional target series
+            target_name: Name of the target column
         """
-        return {
+        descriptor = {
             'numeric': self.numeric,
             'categorical': self.categorical,
             'ordinal': self.ordinal
         }
+
+        # Target info is optional; only add if present
+        if self.target_desc is not None:
+            descriptor['target'] = self.target_desc
+
+        return descriptor
+

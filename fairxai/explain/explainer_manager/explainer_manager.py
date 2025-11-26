@@ -37,9 +37,9 @@ class ExplainerManager:
 
         Args:
             dataset_type: Type of dataset (e.g., 'tabular', 'image', 'text').
-            model_type: Type of model (e.g., 'sklearn_pls', 'torch_mlp').
+            model_type: Type of model (class name, e.g., 'SklearnRandomForestClassifier', 'XGBoostClassifier').
         """
-        self.dataset_type, self.model_type = self._normalize_type_names(dataset_type, model_type)
+        self.dataset_type, self.model_type = dataset_type, model_type
 
         # Import all adapters so subclasses are registered
         import_all_adapters(adapter)
@@ -114,8 +114,3 @@ class ExplainerManager:
             return subclasses
 
         return recurse(GenericExplainerAdapter)
-
-    @staticmethod
-    def _normalize_type_names(*names: str) -> tuple:
-        """Normalize type names to lowercase for consistent comparison."""
-        return tuple(name.lower() for name in names)

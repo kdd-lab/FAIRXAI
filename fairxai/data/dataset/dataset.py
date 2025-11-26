@@ -19,7 +19,7 @@ class Dataset(ABC):
         self.data = data
         self.descriptor = None
         self.class_name = class_name
-        self.target = None
+        self._target = None
 
     # -------------------------------------------------------------------------
     # Abstract methods
