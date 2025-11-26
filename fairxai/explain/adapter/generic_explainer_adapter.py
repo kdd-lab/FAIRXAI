@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List
 
 from fairxai.explain.explaination.generic_explanation import GenericExplanation
 from fairxai.logger import logger
@@ -53,7 +54,7 @@ class GenericExplainerAdapter(ABC):
     # ---------------------------
 
     @abstractmethod
-    def explain_instance(self, instance):
+    def explain_instance(self, instance)-> List[GenericExplanation]:
         """
         Represents an abstract method to explain a specific instance of data.
 
@@ -68,7 +69,7 @@ class GenericExplainerAdapter(ABC):
         pass
 
     @abstractmethod
-    def explain_global(self):
+    def explain_global(self) -> List[GenericExplanation]:
         """
         An abstract method to provide global interpretation or explanation for a model's predictions.
         This method is part of an interpretability framework, ensuring that all implementing

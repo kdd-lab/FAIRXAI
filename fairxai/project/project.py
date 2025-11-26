@@ -9,6 +9,7 @@ import yaml
 from fairxai.bbox.bbox_factory import ModelFactory
 from fairxai.data.dataset.dataset_factory import DatasetFactory
 from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
+from fairxai.explain.explaination.generic_explanation import GenericExplanation
 from fairxai.explain.explainer_manager.explainer_manager import ExplainerManager
 from fairxai.logger import logger
 
@@ -147,14 +148,15 @@ class Project:
                     instance = self.dataset_instance[instance_index]
                 except Exception as e:
                     raise ValueError(f"Invalid instance_index {instance_index}: {e}")
-                explanation = explainer.explain_instance(instance)
+                # An explainer could return multiple types of explanations for a single instance
+                explanations_list: list[GenericExplanation] = explainer.explain_instance(instance)
             else:  # global explanation
                 instance_index = None
                 instance = None
-                explanation = explainer.explain_global()
+                explanations_list: list[GenericExplanation] = explainer.explain_global()
 
             # Build and save record
-            record = self._create_explanation_record(explainer_cls, mode, instance_index, instance, explanation)
+            record = self._create_explanation_record(explainer_cls, mode, instance_index, instance, explanations_list)
             self.explanations.append(record)
             self._save_result(record)
             results.append(record)
@@ -199,7 +201,7 @@ class Project:
         mode: str,
         instance_index: Optional[int],
         instance,
-        explanation,
+        explanations_list: List[GenericExplanation],
     ) -> Dict[str, Any]:
         """
         Build a dictionary record of a single explanation for storage/logging.
@@ -210,7 +212,7 @@ class Project:
             "mode": mode,
             "instance_index": instance_index,
             "instance": self._serialize_instance(instance),
-            "result": getattr(explanation, "to_dict", lambda: explanation)(),
+            "result": [explanation.visualize() for explanation in explanations_list]
         }
 
     @staticmethod

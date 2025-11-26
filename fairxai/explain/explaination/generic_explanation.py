@@ -1,101 +1,59 @@
 class GenericExplanation:
     """
-    A container class for managing and summarizing explanatory data.
+    Base class for all explanations in the framework.
 
-    This class serves as a base for handling explanation data provided by different
-    explainers. It allows the storage, serialization, summarization, and visualization
-    of explanatory information. Explanation types can either be local or global, as defined
-    by the constants. Subclasses can extend their functionality, particularly by implementing
-    the visualization logic.
+    It provides a consistent structure for:
+    - storing explanation metadata,
+    - storing explanation payloads,
+    - returning serializable dictionaries,
+    - providing Streamlit-friendly visualization output.
+
+    Subclasses must override `visualize()` to return a structure that can be
+    rendered by Streamlit (NOT printed) and may optionally extend `to_dict()`.
     """
 
-    # Constants for explanation types
+    # Explanation type constants
     LOCAL_EXPLANATION = "local"
     GLOBAL_EXPLANATION = "global"
 
-    # Constant for maximum value length in summary
-    MAX_VALUE_LENGTH = 100
-
     def __init__(self, explainer_name: str, explanation_type: str, data: dict):
-        # Initialize the explanation container with name, type, and data
+        """
+        Initialize a generic explanation object.
+
+        Parameters:
+            explainer_name (str): Name of the explainer (e.g., SHAP, LIME).
+            explanation_type (str): One of local/global.
+            data (dict): Explanation payload (already structured and serializable).
+        """
         self.explainer_name = explainer_name
-        self.explanation_type = explanation_type  # "local" | "global"
-        self.data = data
+        self.explanation_type = explanation_type
+        self.data = data  # subclasses decide the structure of this dict
 
     def to_dict(self) -> dict:
         """
-        Convert the object into a dictionary representation.
+        Return a fully serializable representation of the explanation.
 
-        This method serializes the object to a dictionary format suitable
-        for data transfer or storage. It includes essential properties
-        like the explanation type, the explainer name, and the data content.
-
-        Returns:
-            dict: A dictionary containing the object's data as key-value pairs.
+        Every explanation—rule-based, counterfactual, feature-importance, etc.—
+        will produce a JSON-ready dictionary with a consistent schema.
         """
-        # Convert object to dictionary for serialization or data transfer
         return {
-            "explainer": self.explainer_name,
-            "type": self.explanation_type,
-            "data": self.data
+            "explainer_name": self.explainer_name,
+            "explanation_type": self.explanation_type,
+            "payload": self.data
         }
-
-    def summarize(self) -> str:
-        """
-        Generate a formatted summary of explanation details.
-
-        This method combines details about the explainer's name, type, and additional
-        data into a readable, string-based summary. The data items are iterated over
-        and their values are formatted for better presentation.
-
-        Returns:
-            str: A string summarizing the explainer's name, type, and data items.
-        """
-        # Create header with explainer name and type
-        summary = f"Explanation {self.explainer_name} ({self.explanation_type})\n"
-
-        # Iterate through all data items and format them
-        for key, value in self.data.items():
-            formatted_value = self._format_value(value)
-            summary += f" - {key}: {formatted_value}\n"
-        return summary
-
-    def _format_value(self, value) -> str:
-        """
-        Converts a given value to its string representation and truncates it to a maximum length
-        if it exceeds the predefined limit.
-
-        Parameters:
-        value: Any
-            The value to be converted to a string representation.
-
-        Returns:
-        str
-            The string representation of the value, truncated if it exceeds the maximum allowed length.
-        """
-        # Convert value to string
-        value_str = str(value)
-
-        # Truncate if longer than MAX_VALUE_LENGTH (100 chars)
-        if len(value_str) > self.MAX_VALUE_LENGTH:
-            return f"{value_str[:self.MAX_VALUE_LENGTH]}..."
-        return value_str
 
     def visualize(self):
         """
-        Abstract method to be implemented by subclasses for visualization.
+        Subclasses must override this and return a Streamlit-friendly structure.
 
-        This method serves as a template method that subclasses must override to
-        provide their specific implementation for visualization logic. It is
-        intentionally left unimplemented in the base class and raises a
-        NotImplementedError if called directly.
+        visualize() MUST:
+        - NOT print anything
+        - NOT generate plots directly
+        - return a dict/list/string that Streamlit can render
 
-        Raises:
-            NotImplementedError: Always raised when the method is invoked, indicating
-            that it must be implemented by a subclass.
+        This ensures the visualization responsibility stays with the frontend,
+        not the explanation object.
         """
-        # Abstract method - must be implemented by subclasses
-        # Template Method Pattern: define the interface, delegate implementation
         raise NotImplementedError(
-            f"visualize() must be implemented by subclasses of {self.__class__.__name__}"
+            f"{self.__class__.__name__}.visualize() must be implemented by subclasses."
         )
