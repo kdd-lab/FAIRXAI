@@ -57,7 +57,8 @@ registry = ProjectRegistry(WORKSPACE_BASE)
 print("Creating Project inside workspace/...")
 
 project = Project(
-    data=clean_train_df,
+    project_name="SCAM with LORE",
+    data=DATA,
     dataset_type=DATASET_TYPE,
     framework="sklearn",
     workspace_path=WORKSPACE_BASE,

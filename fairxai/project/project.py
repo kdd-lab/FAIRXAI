@@ -28,6 +28,7 @@ class Project:
 
     def __init__(
         self,
+        project_name: str,
         data: Any,
         dataset_type: str,
         framework: str,
@@ -58,6 +59,7 @@ class Project:
         self.created_at = datetime.now()
         self.dataset_type = dataset_type
         self.framework = framework
+        self.project_name = project_name
 
         # Create workspace structure
         self.workspace_path = os.path.join(workspace_path, self.id)
@@ -253,6 +255,7 @@ class Project:
         Return a serializable dictionary of project metadata.
         """
         return {
+            "project_name": self.project_name,
             "id": self.id,
             "created_at": self.created_at.isoformat(),
             "dataset_type": self.dataset_type,
@@ -287,6 +290,7 @@ class Project:
         """
         project = cls.__new__(cls)
         project.id = data["id"]
+        project.project_name = data["project_name"]
         project.created_at = datetime.fromisoformat(data["created_at"])
         project.dataset_type = data["dataset_type"]
         project.framework = framework
@@ -312,4 +316,4 @@ class Project:
         return project
 
     def __repr__(self):
-        return f"<Project id={self.id}, dataset={self.dataset_type}, framework={self.framework}, model={self.model_type}>"
+        return f"Project id={self.id}, name={self.project_name}, dataset={self.dataset_type}, framework={self.framework}, model={self.model_type}>"

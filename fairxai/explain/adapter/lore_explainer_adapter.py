@@ -159,42 +159,5 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
 
         return self._map_lore_to_explanations(lore_output, explainer_name="LORE")
 
-    def explain_global(self, instances: Any, params: Optional[Dict[str, Any]] = None) -> List[GenericExplanation]:
-        """
-        Compute a global explanation for a set of instances by aggregating local explanations.
-
-        Currently, this method averages feature importances and collects unique rules
-        across the instances. Counterfactuals are not aggregated.
-
-        Args:
-            instances: Iterable of input instances.
-            params: Optional runtime parameters passed to explain_instance.
-
-        Returns:
-            List of GenericExplanation objects representing global rules and feature importances.
-        """
-        if params is None:
-            params = {}
-
-        # Aggregate rules and feature importances
-        all_rules = []
-        all_feature_importances = {}
-
-        for instance in instances:
-            explanations = self.explain_instance(instance, params=params)
-            for exp in explanations:
-                if isinstance(exp, RuleBasedExplanation):
-                    all_rules.extend(exp.data.get("rules", []))
-                elif isinstance(exp, FeatureImportanceExplanation):
-                    for feat, imp in exp.data.items():
-                        all_feature_importances[feat] = all_feature_importances.get(feat, 0.0) + imp
-
-        # Normalize feature importances by number of instances
-        num_instances = len(instances)
-        averaged_importances = {feat: imp / num_instances for feat, imp in all_feature_importances.items()}
-
-        # Build global explanation objects
-        global_rule_exp = RuleBasedExplanation("LORE", all_rules)
-        global_feature_exp = FeatureImportanceExplanation("LORE", averaged_importances, global_scope=True)
-
-        return [global_rule_exp, global_feature_exp]
+    def explain_global(self, params: Optional[Dict[str, Any]] = None) -> List[GenericExplanation]:
+        pass
