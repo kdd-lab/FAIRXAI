@@ -40,6 +40,7 @@ class Project:
         ordinal_columns: Optional[List[str]] = None,
         device: str = "cpu"
     ):
+        # se ho un modello pytorch e nel file pt ho solo il dizionario, devo per forza passare il dizionario dei parametri in cui esplicitare la classe!
         """
         Initialize a new project with dataset, model, and workspace folders.
 
@@ -67,6 +68,13 @@ class Project:
         os.makedirs(os.path.join(self.workspace_path, "results"), exist_ok=True)
         os.makedirs(os.path.join(self.workspace_path, "pipelines"), exist_ok=True)
         os.makedirs(os.path.join(self.workspace_path, "logs"), exist_ok=True)
+
+        self.model_path = model_path
+        self.model_params = model_params
+        self.device = device
+        self.target_variable = target_variable
+        self.categorical_columns = categorical_columns
+        self.ordinal_columns = ordinal_columns
 
         # Create dataset instance
         self.dataset_instance = DatasetFactory.create(
@@ -261,6 +269,11 @@ class Project:
             "dataset_type": self.dataset_type,
             "framework": self.framework,
             "model_type": self.model_type,
+            "model_path": self.model_path,
+            "model_params": self.model_params,
+            "target_variable": self.target_variable,
+            "categorical_columns": self.categorical_columns,
+            "ordinal_columns": self.ordinal_columns,
             "workspace_path": self.workspace_path,
             "num_explainers": len(self.explainers),
             "num_explanations": len(self.explanations),
@@ -269,49 +282,32 @@ class Project:
     @classmethod
     def load_from_dict(
         cls,
-        data: Dict[str, Any],
-        framework: str,
-        model_path: Optional[str] = None,
-        model_params: Optional[Dict[str, Any]] = None,
-        device: str = "cpu"
+        project_metadata: Dict[str, Any]
     ) -> "Project":
         """
         Restore a project from metadata dictionary.
 
         Args:
-            data: Project metadata dictionary.
-            framework: ML framework of the model ('sklearn', 'torch', etc.).
-            model_path: Optional path to model file (pickle/pth).
-            model_params: Optional parameters for model instantiation.
-            device: Torch device if applicable.
+            project_metadata: Project metadata dictionary.
 
         Returns:
             Project instance with dataset and blackbox reconstructed.
         """
-        project = cls.__new__(cls)
-        project.id = data["id"]
-        project.project_name = data["project_name"]
-        project.created_at = datetime.fromisoformat(data["created_at"])
-        project.dataset_type = data["dataset_type"]
-        project.framework = framework
-
-        # Rebuild workspace path
-        project.workspace_path = data["workspace_path"]
-
-        # Reconstruct dataset and model
-        project.dataset_instance = DatasetFactory.create(data=None, dataset_type=project.dataset_type)
-        project.blackbox = ModelFactory.create(
-            framework=framework,
-            model_path=model_path,
-            model_params=model_params,
-            device=device
+        project = cls(
+            project_name=project_metadata["project_name"],
+            data=None,
+            dataset_type=project_metadata["dataset_type"],
+            framework=project_metadata["framework"],
+            workspace_path=project_metadata["workspace_path"],
+            model_path=project_metadata["model_path"],
+            model_params=project_metadata["model_params"],
+            target_variable=project_metadata["target_variable"],
+            categorical_columns=project_metadata["categorical_columns"],
+            ordinal_columns=project_metadata["ordinal_columns"],
         )
-        project.model_type = type(project.blackbox.model).__name__
 
-        # Re-discover compatible explainers
-        project.explainer_manager = ExplainerManager(project.dataset_type, project.framework)
-        project.explainers = project.explainer_manager.list_available_compatible_explainers()
-        project.explanations = []
+        project.id = project_metadata["id"]
+        project.created_at = datetime.fromisoformat(project_metadata["created_at"])
 
         return project
 
