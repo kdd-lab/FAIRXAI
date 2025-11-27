@@ -14,7 +14,7 @@ git+https://github.com/kdd-lab/LORE_sa.git@main
 #git+https://github.com/samueletonati/Counterfactual-Ensembles-For-Churn-Prediction.git@main
 #git+https://github.com/calathea21/IFAC.git@main
 pandas==2.3.3
-numpy==1.26.4
+numpy~=2.2.6
 setuptools==80.9.0
 pillow==12.0.0
 pytest==8.4.2
@@ -26,7 +26,10 @@ graphviz==0.21
 pylint==4.0.2
 pydeps==3.0.1
 PyYAML==6.0.3
-torch==2.9.0
+torch~=2.9.1
 joblib==1.5.2
 grad-cam==1.5.5
 deap==1.4.3
+fairxai~=0.1.0
+streamlit~=1.51.0
+scikit-learn~=1.7.2

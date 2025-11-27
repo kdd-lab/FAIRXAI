@@ -1,5 +1,6 @@
 import datetime
 import json
+from pathlib import Path
 
 import streamlit as st
 from fairxai.project.project import Project
@@ -27,8 +28,34 @@ def create_project_page():
     framework = st.selectbox("Tipo di modello", ["sklearn", "torch"])
     if framework=="torch":
         device = st.selectbox("Devide", ["cpu", "gpu"])
+    else: device = "cpu"
 
-    model_path = st.file_uploader("Carica modello")
+    # ==============================
+    # FILE BROWSER PER IL MODELLO
+    # ==============================
+
+    # cartella iniziale = home utente
+    base_path = Path.home()
+
+    # input testuale per navigare manualmente (opzionale)
+    current_dir = st.text_input("Cartella corrente:", value=str(base_path))
+
+    if not os.path.isdir(current_dir):
+        st.error("Percorso non valido.")
+        current_dir = str(base_path)
+
+    try:
+        files = os.listdir(current_dir)
+        # mostra solo file comuni di modelli
+        model_files = [f for f in files if f.endswith(('.pkl', '.pth', '.joblib', '.sav'))]
+        selected_file = st.selectbox("Seleziona un file modello:", model_files)
+        model_path = os.path.join(current_dir, selected_file) if selected_file else None
+    except Exception as e:
+        st.error(f"Errore nella navigazione: {e}")
+        model_path = None
+
+    st.caption(f"Path selezionato: `{model_path}`" if model_path else "Nessun file selezionato")
+
     model_params = st.text_area("Parametri del modello (JSON)", value="{}")
 
     uploaded_file = st.file_uploader("Carica dataset", type=["csv"])
@@ -41,13 +68,20 @@ def create_project_page():
 
             if uploaded_file is not None:
                 if dataset_type == "tabular":
-                    data = pd.read_csv(uploaded_file)
+                    try:
+                        data = pd.read_csv(uploaded_file)
+                        st.success(f"Dataset caricato con successo! {data.shape[0]} righe × {data.shape[1]} colonne.")
+                        st.dataframe(data.head())
+                    except Exception as e:
+                        st.error(f"Errore nel caricamento del CSV: {e}")
+                        return
                 else:
+                    # Per altri tipi di dataset (immagini, testo, ecc.)
                     data = uploaded_file.read()
 
             registry = ProjectRegistry(workspace)
             project = Project(
-                name_project = project_name,
+                project_name= project_name,
                 data=data,
                 dataset_type=dataset_type,
                 framework=framework,
@@ -60,7 +94,7 @@ def create_project_page():
                 device=device,
             )
             registry.add(project)
-            st.success(f"Progetto creato con successo! ID: {project.name_project}")
+            st.success(f"Progetto creato con successo! ID: {project.project_name}")
             st.json(project.to_dict())
 
         except Exception as e:

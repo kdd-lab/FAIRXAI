@@ -29,6 +29,8 @@ class ProjectRegistry:
         self.workspace_base = workspace_base
         os.makedirs(self.workspace_base, exist_ok=True)
         self._projects: Dict[str, Project] = {}
+        for project_dir in os.listdir(workspace_base):
+            self.load_project(project_dir)
 
     # ============================================================
     # Basic management
@@ -73,9 +75,9 @@ class ProjectRegistry:
             raise FileNotFoundError(f"No project found at {metadata_path}")
 
         with open(metadata_path, "r") as f:
-            data = json.load(f)
+            metadata = json.load(f)
 
-        project = Project.load_from_dict(data)
+        project = Project.load_from_dict(metadata)
         self._projects[project.id] = project
         logger.info(f"Loaded project {project_id} from disk.")
         return project

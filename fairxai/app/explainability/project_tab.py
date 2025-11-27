@@ -17,8 +17,8 @@ def projects_page():
         return
 
     selected_id = st.selectbox("Seleziona un progetto:", project_ids)
-
-    if st.button("Carica progetto"):
+    load = st.button("Carica progetto")
+    if load:
         try:
             project = registry.load_project(selected_id)
             st.success(f"Progetto {project.id} caricato.")
