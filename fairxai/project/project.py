@@ -2,7 +2,7 @@ import json
 import os
 import uuid
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 import yaml
 
@@ -22,101 +22,146 @@ class Project:
 
     This version uses the "framework-first" ModelFactory approach, where
     the user specifies the ML framework (sklearn, torch, etc.) and optionally
-    a model file path. The correct BBox wrapper is automatically instantiated
+    a model file path. The correct black-box wrapper is automatically instantiated
     and loaded.
+
+    Attributes:
+        id (str): UUID of the project.
+        created_at (datetime): Timestamp of creation.
+        dataset_instance (Dataset): The dataset instance (tabular, image, etc.).
+        blackbox (Any): Wrapped ML model.
+        explainers (List[Type[GenericExplainerAdapter]]): Compatible explainer classes.
+        explanations (List[Dict[str, Any]]): Stored explanation records.
     """
 
     def __init__(
-        self,
-        project_name: str,
-        data: Any,
-        dataset_type: str,
-        framework: str,
-        model_path: Optional[str] = None,
-        model_params: Optional[Dict[str, Any]] = None,
-        workspace_path: str = "./workspace",
-        target_variable: Optional[str] = None,
-        categorical_columns: Optional[List[str]] = None,
-        ordinal_columns: Optional[List[str]] = None,
-        device: str = "cpu"
+            self,
+            project_name: str,
+            data: Any = None,
+            dataset_metadata: Optional[dict] = None,
+            dataset_type: Optional[str] = None,
+            framework: Optional[str] = None,
+            model_path: Optional[str] = None,
+            model_params: Optional[Dict[str, Any]] = None,
+            workspace_path: str = "./workspace",
+            target_variable: Optional[str] = None,
+            categorical_columns: Optional[List[str]] = None,
+            ordinal_columns: Optional[List[str]] = None,
+            device: str = "cpu",
+            is_reload: bool = False
     ):
         """
-        Initialize a new project with dataset, model, and workspace folders.
+        Initialize a new project or reload an existing one.
 
-        Args:
-            data: Raw dataset to create the dataset instance.
-            dataset_type: Dataset type ('tabular', 'image', 'text', etc.).
-            framework: ML framework of the model ('sklearn', 'torch', etc.).
-            model_path: Optional path to pre-trained model file (pickle/pth).
-            model_params: Optional parameters for model instantiation.
-            workspace_path: Base folder for project workspace.
-            target_variable: Name of target variable in dataset (optional).
-            categorical_columns: List of categorical columns (optional).
-            ordinal_columns: List of ordinal columns (optional).
-            device: Device for Torch models ('cpu' or 'cuda').
+        Either `data` (for new project) or `dataset_metadata` (for reload) must be provided.
+
+        :param project_name: Name of the project
+        :param data: Raw dataset to create the dataset instance (new project)
+        :param dataset_metadata: Metadata to reload dataset (existing project)
+        :param dataset_type: Dataset type ('tabular', 'image', 'text', 'timeseries')
+        :param framework: ML framework ('sklearn', 'torch', etc.)
+        :param model_path: Optional path to pre-trained model
+        :param model_params: Optional parameters for model instantiation
+        :param workspace_path: Base folder for project workspace
+        :param target_variable: Name of target variable in dataset (optional)
+        :param categorical_columns: Categorical columns (tabular only)
+        :param ordinal_columns: Ordinal columns (tabular only)
+        :param device: Device for Torch models ('cpu' or 'cuda')
+        :param is_reload: If True, indicates that this project is being reloaded and folders should not be recreated
         """
-        self.id = str(uuid.uuid4())
-        self.created_at = datetime.now()
-        self.dataset_type = dataset_type
-        self.framework = framework
-        self.project_name = project_name
+        self.id: str = str(uuid.uuid4())
+        self.created_at: datetime = datetime.now()
+        self.project_name: str = project_name
+        self.dataset_type: Optional[str] = dataset_type
+        self.framework: Optional[str] = framework
 
-        # Create workspace structure
-        self.workspace_path = os.path.join(workspace_path, self.id)
-        os.makedirs(self.workspace_path, exist_ok=True)
-        os.makedirs(os.path.join(self.workspace_path, "results"), exist_ok=True)
-        os.makedirs(os.path.join(self.workspace_path, "pipelines"), exist_ok=True)
-        os.makedirs(os.path.join(self.workspace_path, "logs"), exist_ok=True)
+        # Decide workspace path: reuse if reloading, else create new UUID folder
+        if is_reload and dataset_metadata is not None:
+            # Use workspace from metadata if reloading
+            self.workspace_path: str = workspace_path
+            os.makedirs(self.workspace_path, exist_ok=True)  # ensure it exists
+        else:
+            # New project: create unique workspace folder
+            self.workspace_path: str = os.path.join(workspace_path, self.id)
+            os.makedirs(self.workspace_path, exist_ok=True)
+            os.makedirs(os.path.join(self.workspace_path, "results"), exist_ok=True)
+            os.makedirs(os.path.join(self.workspace_path, "pipelines"), exist_ok=True)
+            os.makedirs(os.path.join(self.workspace_path, "logs"), exist_ok=True)
 
-        # Create dataset instance
-        self.dataset_instance = DatasetFactory.create(
-            data,
-            dataset_type,
-            class_name=target_variable,
-            categorical_columns=categorical_columns,
-            ordinal_columns=ordinal_columns,
-        )
+        # Store model & dataset parameters
+        self.model_path: Optional[str] = model_path
+        self.model_params: Optional[Dict[str, Any]] = model_params
+        self.device: str = device
+        self.target_variable: Optional[str] = target_variable
+        self.categorical_columns: Optional[List[str]] = categorical_columns
+        self.ordinal_columns: Optional[List[str]] = ordinal_columns
 
-        # Create BBox wrapper using ModelFactory (handles file loading)
+        # -------------------------
+        # Dataset initialization
+        # -------------------------
+        if data is not None:
+            # New dataset instance from raw data
+            self.dataset_instance = DatasetFactory.create(
+                data,
+                dataset_type,
+                class_name=target_variable,
+                categorical_columns=categorical_columns,
+                ordinal_columns=ordinal_columns
+            )
+        elif dataset_metadata is not None:
+            # Reload dataset from saved metadata using dataset-specific from_dict
+            dataset_class = DatasetFactory.get_class(dataset_type)
+            self.dataset_instance = dataset_class.from_dict(
+                dataset_metadata,
+                project_path=self.workspace_path
+            )
+        else:
+            raise ValueError("Either `data` or `dataset_metadata` must be provided")
+
+        # -------------------------
+        # Model / blackbox wrapper
+        # -------------------------
         self.blackbox = ModelFactory.create(
             framework=framework,
             model_path=model_path,
             model_params=model_params,
             device=device
         )
+        self.model_type: str = type(self.blackbox.model).__name__
 
-        # Store model type for logging / metadata
-        self.model_type = type(self.blackbox.model).__name__
-
-        logger.info(f"Project {self.id} initialized with dataset {self.dataset_type} and model {self.model_type}.")
-
-        # Discover compatible explainers for this dataset/model pair
+        # -------------------------
+        # Explainer discovery
+        # -------------------------
         self.explainer_manager = ExplainerManager(self.dataset_type, self.model_type)
         self.explainers: List[Type[GenericExplainerAdapter]] = (
             self.explainer_manager.list_available_compatible_explainers()
         )
 
-        # Container for explanation records
+        # -------------------------
+        # Explanation storage
+        # -------------------------
         self.explanations: List[Dict[str, Any]] = []
+
+        logger.info(f"Project {self.id} initialized with dataset {self.dataset_type} and model {self.model_type}.")
+        logger.info(f"Found {len(self.explainers)} compatible explainers.")
 
         # Persist metadata immediately
         self._save_metadata()
-        logger.info(f"Project {self.id} initialized with {len(self.explainers)} compatible explainers.")
 
-    # -----------------------------
+    # -------------------------------------------------------------------------
     # Pipeline execution
-    # -----------------------------
+    # -------------------------------------------------------------------------
     def run_explanation_pipeline(self, pipeline: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Execute a user-defined explainability pipeline.
 
         Each step should include:
-            - "explainer": str (explainer class name)
-            - "mode": "local" | "global" (optional; inferred if missing)
-            - "params": dict (optional; 'local' requires "instance_index")
+            - 'explainer': str (explainer class name)
+            - 'mode': 'local' | 'global' (optional; inferred if missing)
+            - 'params': dict (optional; 'local' requires 'instance_index')
 
-        Returns:
-            List of explanation records (dicts) for each pipeline step.
+        :param pipeline: List of pipeline steps
+        :return: List of explanation records
         """
         results: List[Dict[str, Any]] = []
         explainer_map = {cls.__name__.lower(): cls for cls in self.explainers}
@@ -143,16 +188,10 @@ class Project:
             explainer: GenericExplainerAdapter = explainer_cls(model=self.blackbox, dataset=self.dataset_instance)
 
             if mode == "local":
-                if "instance_index" not in params:
-                    raise ValueError("Local explanation requires 'instance_index'")
                 instance_index = params["instance_index"]
-                try:
-                    instance = self.dataset_instance[instance_index]
-                except Exception as e:
-                    raise ValueError(f"Invalid instance_index {instance_index}: {e}")
-                # An explainer could return multiple types of explanations for a single instance
+                instance = self.dataset_instance[instance_index]
                 explanations_list: list[GenericExplanation] = explainer.explain_instance(instance)
-            else:  # global explanation
+            else:
                 instance_index = None
                 instance = None
                 explanations_list: list[GenericExplanation] = explainer.explain_global()
@@ -163,18 +202,19 @@ class Project:
             self._save_result(record)
             results.append(record)
 
+        # Update project metadata after pipeline execution
         self._save_metadata()
         return results
 
+    # -------------------------------------------------------------------------
+    # Pipeline from YAML
+    # -------------------------------------------------------------------------
     def run_pipeline_from_yaml(self, yaml_path: str) -> List[Dict[str, Any]]:
         """
-        Load pipeline definition from YAML and execute it.
+        Load pipeline definition from YAML file and execute it.
 
-        Args:
-            yaml_path: Path to YAML file containing pipeline specification.
-
-        Returns:
-            List of explanation records from executed pipeline.
+        :param yaml_path: Path to YAML file containing pipeline specification.
+        :return: List of explanation records
         """
         yaml_path = os.path.expanduser(yaml_path)
         if not os.path.exists(yaml_path):
@@ -194,9 +234,9 @@ class Project:
 
         return self.run_explanation_pipeline(pipeline)
 
-    # -----------------------------
+    # -------------------------------------------------------------------------
     # Serialization / persistence
-    # -----------------------------
+    # -------------------------------------------------------------------------
     def _create_explanation_record(
         self,
         explainer_cls: Type[GenericExplainerAdapter],
@@ -205,9 +245,7 @@ class Project:
         instance,
         explanations_list: List[GenericExplanation],
     ) -> Dict[str, Any]:
-        """
-        Build a dictionary record of a single explanation for storage/logging.
-        """
+        """Build a dictionary record of a single explanation for storage/logging."""
         return {
             "timestamp": datetime.now().isoformat(),
             "explainer": explainer_cls.__name__,
@@ -219,9 +257,7 @@ class Project:
 
     @staticmethod
     def _serialize_instance(instance) -> Any:
-        """
-        Serialize an instance for storage. Uses `to_dict()` if available.
-        """
+        """Serialize an instance for storage. Uses `to_dict()` if available."""
         if instance is None:
             return None
         if hasattr(instance, "to_dict"):
@@ -229,9 +265,7 @@ class Project:
         return str(instance)
 
     def _save_result(self, record: Dict[str, Any]) -> None:
-        """
-        Save an explanation record as JSON in the results folder.
-        """
+        """Save an explanation record as JSON in the results folder."""
         results_dir = os.path.join(self.workspace_path, "results")
         os.makedirs(results_dir, exist_ok=True)
         ts = record["timestamp"].replace(":", "_")
@@ -242,18 +276,16 @@ class Project:
         logger.debug(f"Saved explanation result to {path}")
 
     def _save_metadata(self) -> None:
-        """
-        Persist project metadata to JSON in the workspace.
-        """
+        """Persist project metadata (including dataset) to JSON in the workspace."""
         metadata = self.to_dict()
+        # Add dataset metadata
+        metadata["dataset_metadata"] = self.dataset_instance.to_dict()
         path = os.path.join(self.workspace_path, "project.json")
         with open(path, "w") as f:
             json.dump(metadata, f, indent=2, default=str)
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Return a serializable dictionary of project metadata.
-        """
+        """Return a serializable dictionary of project metadata."""
         return {
             "project_name": self.project_name,
             "id": self.id,
@@ -261,59 +293,47 @@ class Project:
             "dataset_type": self.dataset_type,
             "framework": self.framework,
             "model_type": self.model_type,
+            "model_path": self.model_path,
+            "model_params": self.model_params,
+            "device": self.device,
+            "target_variable": self.target_variable,
+            "categorical_columns": self.categorical_columns,
+            "ordinal_columns": self.ordinal_columns,
             "workspace_path": self.workspace_path,
             "num_explainers": len(self.explainers),
             "num_explanations": len(self.explanations),
         }
 
     @classmethod
-    def load_from_dict(
-        cls,
-        data: Dict[str, Any],
-        framework: str,
-        model_path: Optional[str] = None,
-        model_params: Optional[Dict[str, Any]] = None,
-        device: str = "cpu"
-    ) -> "Project":
+    def load_from_dict(cls, project_metadata: Dict[str, Any]) -> "Project":
         """
         Restore a project from metadata dictionary.
 
-        Args:
-            data: Project metadata dictionary.
-            framework: ML framework of the model ('sklearn', 'torch', etc.).
-            model_path: Optional path to model file (pickle/pth).
-            model_params: Optional parameters for model instantiation.
-            device: Torch device if applicable.
-
-        Returns:
-            Project instance with dataset and blackbox reconstructed.
+        :param project_metadata: Project metadata dictionary.
+        :return: Project instance with dataset and blackbox reconstructed.
         """
-        project = cls.__new__(cls)
-        project.id = data["id"]
-        project.project_name = data["project_name"]
-        project.created_at = datetime.fromisoformat(data["created_at"])
-        project.dataset_type = data["dataset_type"]
-        project.framework = framework
-
-        # Rebuild workspace path
-        project.workspace_path = data["workspace_path"]
-
-        # Reconstruct dataset and model
-        project.dataset_instance = DatasetFactory.create(data=None, dataset_type=project.dataset_type)
-        project.blackbox = ModelFactory.create(
-            framework=framework,
-            model_path=model_path,
-            model_params=model_params,
-            device=device
+        project = cls(
+            project_name=project_metadata["project_name"],
+            data=None,
+            dataset_metadata=project_metadata.get("dataset_metadata"),
+            dataset_type=project_metadata["dataset_type"],
+            framework=project_metadata["framework"],
+            workspace_path=project_metadata["workspace_path"],
+            model_path=project_metadata["model_path"],
+            model_params=project_metadata["model_params"],
+            target_variable=project_metadata["target_variable"],
+            categorical_columns=project_metadata["categorical_columns"],
+            ordinal_columns=project_metadata["ordinal_columns"],
+            device=project_metadata["device"],
+            is_reload=True
         )
-        project.model_type = type(project.blackbox.model).__name__
 
-        # Re-discover compatible explainers
-        project.explainer_manager = ExplainerManager(project.dataset_type, project.framework)
-        project.explainers = project.explainer_manager.list_available_compatible_explainers()
-        project.explanations = []
-
+        project.id = project_metadata["id"]
+        project.created_at = datetime.fromisoformat(project_metadata["created_at"])
         return project
 
     def __repr__(self):
-        return f"Project id={self.id}, name={self.project_name}, dataset={self.dataset_type}, framework={self.framework}, model={self.model_type}>"
+        return (
+            f"<Project id={self.id}, name={self.project_name}, "
+            f"dataset={self.dataset_type}, framework={self.framework}, model={self.model_type}>"
+        )

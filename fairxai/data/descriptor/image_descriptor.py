@@ -1,67 +1,91 @@
 import os
-
+from typing import List, Union, Optional
 import numpy as np
 from PIL import Image
-
 from fairxai.data.descriptor.base_descriptor import BaseDatasetDescriptor
 
 
 class ImageDatasetDescriptor(BaseDatasetDescriptor):
+    """
+    Descriptor for image datasets.
 
-    def describe(self) -> dict:
+    Analyzes a dataset composed of NumPy arrays or image file paths,
+    providing metadata including number of samples, resolution, number of channels,
+    and optional model input shape via hwc_permutation.
+    """
+
+    def __init__(self, data: List[Union[str, np.ndarray]]):
         """
-        Analyzes and describes an image dataset.
+        Initialize the descriptor with dataset data.
 
-        Returns a dictionary containing detailed information about the dataset,
-        including the number of images, input format, resolution, and number of channels.
-
-        Returns:
-            dict: A dictionary with dataset description
-
-        Raises:
-            ValueError: If the dataset is empty
-            TypeError: If the image format is not supported
+        :param data: List of image file paths or NumPy arrays
+        :type data: list[Union[str, np.ndarray]]
         """
-        # Count the total number of images in the dataset
+        super().__init__(data)
+
+    def describe(self, hwc_permutation: Optional[List[int]] = None) -> dict:
+        """
+        Analyze and describe the dataset.
+
+        :param hwc_permutation: Optional permutation of dimensions expected by the model (e.g., [1,2,0])
+        :type hwc_permutation: list[int], optional
+        :return: Dictionary containing dataset description
+        :rtype: dict
+        :raises ValueError: If dataset is empty or permutation is invalid
+        :raises TypeError: If dataset contains unsupported types
+        """
         n_images = len(self.data)
         if n_images == 0:
-            raise ValueError("No given images.")
+            raise ValueError("No images available to describe.")
 
-        # Take the first image as a sample for analysis
-        sample = self.data[0]
-
-        # Initialize the description dictionary with basic information
+        sample = self.data[0]  # Take first image or path for metadata
         desc = {"type": "image", "n_samples": n_images}
 
-        # Case 1: Image provided as file path (string)
         if isinstance(sample, str):
-            # Open the image using PIL/Pillow
-            img = Image.open(sample)
+            # Case: image path
+            try:
+                img = Image.open(sample)  # preserve original channels
+            except Exception as e:
+                raise ValueError(f"Cannot open image file {sample}: {e}")
+
+            resolution = img.size[::-1]  # (H, W)
+            channels = len(img.getbands())
             desc.update({
                 "input_format": "path",
-                # Reverse img.size to get (Height, Width) instead of (Width, Height)
-                "resolution": img.size[::-1],
-                # Get the number of color channels (e.g., 3 for RGB, 1 for grayscale)
-                "channels": len(img.getbands()),
-                # Extract only the filename without the full path
-                "sample_image": os.path.basename(sample)
+                "resolution": resolution,
+                "channels": channels,
+                "sample_image": os.path.basename(sample),
+                "original_shape": resolution + (channels,)
             })
 
-        # Case 2: Image provided as NumPy array
         elif isinstance(sample, np.ndarray):
+            # Case: NumPy array
             shape = sample.shape
-            # FIXME: in una batch ho sempre in cima la batch, l'ordine non è fisso (dipende da come è stato codificato il dataset)
+            if len(shape) == 2:
+                h, w = shape
+                c = 1
+            elif len(shape) == 3:
+                h, w, c = shape
+            else:
+                raise ValueError(f"Unsupported array shape: {shape}")
+
             desc.update({
                 "input_format": "numpy",
-                # First two dimensions are height and width
-                "resolution": shape[:2],
-                # Third dimension is channels if present, otherwise 1 (grayscale)
-                "channels": shape[2] if len(shape) == 3 else 1
+                "resolution": (h, w),
+                "channels": c,
+                "sample_image": sample,
+                "original_shape": shape
             })
 
-        # Case 3: Unsupported format
         else:
-            raise TypeError("Unsupported image format (use path or numpy array)")
+            raise TypeError("Unsupported image format (use path or NumPy array)")
 
-        # Return the complete description dictionary
+        # Include optional hwc_permutation and compute expected model shape
+        if hwc_permutation is not None:
+            desc["hwc_permutation"] = hwc_permutation
+            try:
+                desc["model_expected_shape"] = tuple(desc["original_shape"][i] for i in hwc_permutation)
+            except IndexError:
+                raise ValueError(f"Invalid hwc_permutation {hwc_permutation} for shape {desc['original_shape']}")
+
         return desc

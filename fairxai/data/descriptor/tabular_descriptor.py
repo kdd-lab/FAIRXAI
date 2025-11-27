@@ -59,6 +59,7 @@ class TabularDatasetDescriptor(BaseDatasetDescriptor):
         Args:
             target: optional target column (Series). If provided, its summary will be
                     included under 'target' in the returned descriptor.
+            target_name: optional target column name.
 
         Returns:
             dict: Descriptor dictionary including features and optional target.
