@@ -1,9 +1,9 @@
+from __future__ import annotations
 import os
-from typing import Optional, List, Any, Union
-
-import numpy as np
+from typing import Optional, List, Union, Dict, Any
 import pandas as pd
 from pandas import DataFrame, Series
+import numpy as np
 
 from fairxai.data.dataset import Dataset
 from fairxai.data.descriptor.tabular_descriptor import TabularDatasetDescriptor
@@ -12,45 +12,79 @@ from fairxai.logger import logger
 
 class TabularDataset(Dataset):
     """
-    Tabular dataset container used as the single reference dataset for explainers.
+    Tabular dataset container for explainers.
 
-    Key characteristics / design decisions:
-      - Accepts DataFrame, CSV path, dict, or list[dict] as input.
-      - Extracts the target (if provided) into `self._target` and removes it
-        from `self._data` so that `self._data` always contains only feature columns.
-      - Descriptor is computed on features-only DataFrame to provide stable
-        feature indices for explainers.
-      - Implements __len__ and __getitem__ to be indexable by integer.
-      - __getitem__ returns a 1-D numpy array (feature vector), which is broadly
-        compatible with explainer adapters that call `np.asarray(instance)`.
+    Supports initialization from:
+        - pandas DataFrame
+        - CSV file path
+        - dict or list of dict
+
+    The dataset supports two serialization modes:
+
+    - **CSV-based dataset**:
+      Only the CSV path is stored. Data is reloaded from the original CSV on load.
+
+    - **Memory-based dataset**:
+      Raw DataFrame is saved as CSV inside the project folder for persistence.
+
+    Features and target are separated:
+        - self._data: features-only DataFrame
+        - self._target: target Series (if class_name provided)
     """
 
-    def __init__(self, data: Union[DataFrame, str, dict, List[dict]], class_name: Optional[str] = None,
-                 categorical_columns: Optional[List[str]] = None, ordinal_columns: Optional[List[str]] = None,
-                 dropna: bool = False):
+    def __init__(
+        self,
+        data: Union[DataFrame, str, dict, List[dict]],
+        class_name: Optional[str] = None,
+        categorical_columns: Optional[List[str]] = None,
+        ordinal_columns: Optional[List[str]] = None,
+        dropna: bool = False
+    ) -> None:
         """
         Initialize TabularDataset.
 
-        Args:
-            data: pandas.DataFrame | path-to-csv | dict | list[dict]
-            class_name: optional target column name; if provided and present,
-                        target will be extracted into self._target and removed
-                        from the features DataFrame.
-            categorical_columns: optional list of column names to treat as categorical
-            ordinal_columns: optional list of column names to treat as ordinal
-            dropna: whether to drop rows with NA when loading from CSV (applies to CSV only)
+        Parameters
+        ----------
+        data : DataFrame | str | dict | list[dict]
+            Source data
+        class_name : str | None
+            Target column name, if present
+        categorical_columns : list[str] | None
+            Column names to treat as categorical
+        ordinal_columns : list[str] | None
+            Column names to treat as ordinal
+        dropna : bool
+            If reading CSV, drop rows with missing values
         """
-        # --- Normalize input into a pandas DataFrame ---
         super().__init__(data, class_name)
-        if isinstance(data, pd.DataFrame):
-            df = data
-        elif isinstance(data, str) and os.path.exists(data) and data.lower().endswith(".csv"):
+
+        self.source_type: str  # "csv" or "memory"
+        self.csv_path: Optional[str] = None
+        self._categorical_columns: List[str] = list(categorical_columns) if categorical_columns else []
+        self._ordinal_columns: List[str] = list(ordinal_columns) if ordinal_columns else []
+        self.class_name: Optional[str] = class_name
+
+        # --------------------------
+        # CSV-based dataset
+        # --------------------------
+        if isinstance(data, str) and os.path.exists(data) and data.lower().endswith(".csv"):
+            self.source_type = "csv"
+            self.csv_path = data
             df = pd.read_csv(data, skipinitialspace=True, na_values="?", keep_default_na=True)
             if dropna:
                 df = df.dropna()
+
+        # --------------------------
+        # Memory-based dataset
+        # --------------------------
+        elif isinstance(data, pd.DataFrame):
+            self.source_type = "memory"
+            df = data.copy()
         elif isinstance(data, dict):
+            self.source_type = "memory"
             df = pd.DataFrame(data)
         elif isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            self.source_type = "memory"
             df = pd.DataFrame(data)
         else:
             raise TypeError(
@@ -58,118 +92,180 @@ class TabularDataset(Dataset):
                 "Supported: DataFrame, CSV path, dict, list[dict]."
             )
 
-        # Store passed column hints (but we'll sanitize later)
-        self._categorical_columns = list(categorical_columns) if categorical_columns else []
-        self._ordinal_columns = list(ordinal_columns) if ordinal_columns else []
-        self.class_name = class_name  # keep original target name (may be None)
-
-        # --- Extract target (if present) and keep features-only DataFrame ---
+        # --------------------------
+        # Extract target
+        # --------------------------
         if self.class_name is not None and self.class_name in df.columns:
-            # Extract target series and remove column from df to keep feature columns stable
-            self._target: Optional[Series] = df[self.class_name]
+            self._target: Optional[Series] = df[self.class_name].copy()
             df = df.drop(columns=[self.class_name])
         else:
             self._target = None
 
-        # Features-only DataFrame stored here
         self._data: DataFrame = df
 
-        # compute descriptor on features-only DataFrame
-        # But first sanitize categorical/ordinal hints: they must reference feature columns only
+        # Remove target from hints if present
         self._sanitize_column_hints()
+
+        # Compute descriptor
         try:
             self.update_descriptor()
         except ValueError as e:
             logger.error(f"Error computing descriptor: {e}")
             raise
 
-    # -------------------------
+    # --------------------------
+    # Serialization
+    # --------------------------
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serialize dataset metadata for project persistence.
+
+        Returns
+        -------
+        dict
+            Metadata describing dataset type, source, and column hints.
+        """
+        return {
+            "type": "tabular",
+            "source_type": self.source_type,
+            "csv_path": self.csv_path,
+            "class_name": self.class_name,
+            "categorical_columns": self._categorical_columns,
+            "ordinal_columns": self._ordinal_columns,
+            "columns": list(self._data.columns)
+        }
+
+    @classmethod
+    def from_dict(cls, meta: Dict[str, Any], project_path: Optional[str] = None) -> TabularDataset:
+        """
+        Reconstruct a TabularDataset from metadata.
+
+        Parameters
+        ----------
+        meta : dict
+            Serialized metadata
+        project_path : str | None
+            Project folder path; used to locate memory-based CSV if needed
+
+        Returns
+        -------
+        TabularDataset
+        """
+        source = meta["source_type"]
+
+        if source == "csv":
+            return cls(data=meta["csv_path"],
+                       class_name=meta.get("class_name"),
+                       categorical_columns=meta.get("categorical_columns"),
+                       ordinal_columns=meta.get("ordinal_columns"))
+        elif source == "memory":
+            # Memory-based dataset: load CSV inside project folder
+            if project_path is None:
+                raise ValueError("project_path must be provided to load memory-based dataset")
+            csv_file = os.path.join(project_path, "dataset", "tabular.csv")
+            if not os.path.exists(csv_file):
+                raise FileNotFoundError(f"Missing memory dataset file: {csv_file}")
+            df = pd.read_csv(csv_file)
+            return cls(data=df,
+                       class_name=meta.get("class_name"),
+                       categorical_columns=meta.get("categorical_columns"),
+                       ordinal_columns=meta.get("ordinal_columns"))
+        else:
+            raise ValueError(f"Unknown source_type: {source}")
+
+    # --------------------------
+    # Save memory-based dataset
+    # --------------------------
+    def save_memory_data(self, dest_folder: str) -> None:
+        """
+        Save memory-based dataset to CSV inside project folder.
+
+        Parameters
+        ----------
+        dest_folder : str
+            Destination folder path
+        """
+        if self.source_type != "memory":
+            return
+
+        os.makedirs(dest_folder, exist_ok=True)
+        csv_file = os.path.join(dest_folder, "tabular.csv")
+        self._data.to_csv(csv_file, index=False)
+        # Also save target column separately if needed
+        if self._target is not None and self.class_name:
+            target_file = os.path.join(dest_folder, f"{self.class_name}.csv")
+            self._target.to_csv(target_file, index=False)
+        logger.info(f"Saved memory-based tabular dataset to {csv_file}")
+
+    # --------------------------
     # Internal helpers
-    # -------------------------
-    def _sanitize_column_hints(self):
-        """
-        Remove target column from categorical/ordinal hints if present and log a warning.
-        """
+    # --------------------------
+    def _sanitize_column_hints(self) -> None:
+        """Remove target column from categorical/ordinal hints if present."""
         if self.class_name:
             if self.class_name in self._categorical_columns:
-                logger.warning(f"Target column '{self.class_name}' found in categorical_columns; removing it for descriptor.")
+                logger.warning(
+                    f"Target column '{self.class_name}' found in categorical_columns; removing it."
+                )
                 self._categorical_columns = [c for c in self._categorical_columns if c != self.class_name]
             if self.class_name in self._ordinal_columns:
-                logger.warning(f"Target column '{self.class_name}' found in ordinal_columns; removing it for descriptor.")
+                logger.warning(
+                    f"Target column '{self.class_name}' found in ordinal_columns; removing it."
+                )
                 self._ordinal_columns = [c for c in self._ordinal_columns if c != self.class_name]
 
-    # -------------------------
-    # Descriptor & metadata
-    # -------------------------
-    def update_descriptor(self, categorical_columns: Optional[List[str]] = None,
-                          ordinal_columns: Optional[List[str]] = None):
-        """
-        Compute and set the dataset descriptor based on feature DataFrame.
-        Adds an extra 'target' entry containing the target series if present.
+    # --------------------------
+    # Descriptor
+    # --------------------------
+    def update_descriptor(
+        self,
+        categorical_columns: Optional[List[str]] = None,
+        ordinal_columns: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Compute dataset descriptor based on features-only DataFrame."""
+        categorical_columns = categorical_columns or self._categorical_columns
+        ordinal_columns = ordinal_columns or self._ordinal_columns
 
-        Args:
-            categorical_columns: Optional list of categorical columns (feature-only)
-            ordinal_columns: Optional list of ordinal columns (feature-only)
+        # Keep only valid columns
+        categorical_columns = [c for c in categorical_columns if c in self._data.columns]
+        ordinal_columns = [c for c in ordinal_columns if c in self._data.columns]
 
-        Returns:
-            descriptor dict
-        """
-        # Use internal hints if arguments not provided
-        categorical_columns = categorical_columns if categorical_columns is not None else self._categorical_columns
-        ordinal_columns = ordinal_columns if ordinal_columns is not None else self._ordinal_columns
-
-        # Keep only columns actually in the features DataFrame
-        categorical_columns = [c for c in (categorical_columns or []) if c in self._data.columns]
-        ordinal_columns = [c for c in (ordinal_columns or []) if c in self._data.columns]
-
-        # Compute descriptor on feature-only DataFrame
         self.descriptor = TabularDatasetDescriptor(
             data=self._data,
             categorical_columns=categorical_columns,
             ordinal_columns=ordinal_columns
         ).describe(target=self._target, target_name=self.class_name)
+        return self.descriptor
 
-    # -------------------------
-    # Indexing & length
-    # -------------------------
-    def __len__(self):
-        """Return number of feature rows."""
+    # --------------------------
+    # Indexing / length
+    # --------------------------
+    def __len__(self) -> int:
         return len(self._data)
 
-    def __getitem__(self, idx: int):
-        """
-        Return feature vector for index `idx` as a 1-D numpy array.
-
-        This format is broadly compatible with explainer adapters that call
-        `np.asarray(instance)` or expect numeric arrays.
-        """
-        # allow negative indexing as pandas does
+    def __getitem__(self, idx: int) -> np.ndarray:
+        """Return feature vector for index idx as 1-D numpy array."""
         row = self._data.iloc[idx]
-        # return 1-D numpy array (values in column order)
         return row.values
 
-    # -------------------------
-    # Convenience properties
-    # -------------------------
+    # --------------------------
+    # Properties
+    # --------------------------
     @property
     def X(self) -> DataFrame:
-        """Return the features-only DataFrame (unchanged)."""
         return self._data
 
     @property
     def y(self) -> Optional[Series]:
-        """Return the target Series (if present), otherwise None."""
         return self._target
 
     @property
     def target(self) -> Optional[Series]:
-        """Alias for y."""
-        return self.y
+        return self._target
 
     @property
     def features(self) -> List[str]:
-        """Return feature names according to current descriptor (numeric+categorical+ordinal)."""
-        # If descriptor exists, use its ordering; otherwise fallback to DataFrame columns
+        """Return feature names according to descriptor."""
         if hasattr(self, "descriptor") and self.descriptor:
             names = []
             for section in ["numeric", "categorical", "ordinal"]:
@@ -177,75 +273,38 @@ class TabularDataset(Dataset):
             return names
         return list(self._data.columns)
 
-    # -------------------------
-    # Feature helpers
-    # -------------------------
-    def get_feature_names(self, include_target: bool = False):
-        """
-        Return list of feature names. include_target is ignored because target
-        is stored separately and not part of features DataFrame.
-        """
+    def get_feature_names(self) -> List[str]:
         return self.features
 
-    def get_number_of_features(self, include_target: bool = False):
-        return len(self.get_feature_names())
-
-    def get_feature_name(self, index: int):
-        """
-        Retrieve a feature name by its index according to the descriptor.
-
-        Raises:
-            IndexError if not found.
-        """
+    def get_feature_name(self, index: int) -> str:
         for section in ["numeric", "categorical", "ordinal"]:
             for name, info in self.descriptor.get(section, {}).items():
                 if info.get("index") == index:
                     return name
-        # Fallback: if descriptor missing or index not found, map using DataFrame columns
+        # fallback
         cols = list(self._data.columns)
         if 0 <= index < len(cols):
             return cols[index]
         raise IndexError(f"No feature found with index {index}")
 
-    def get_class_values(self):
-        """
-        Return the list of distinct target values.
-
-        Raises:
-            Exception: if class_name is None or target missing.
-        """
+    def get_class_values(self) -> List[Any]:
         if not self.class_name:
-            raise Exception("ERR: class_name is None. Use set_class_name('<column name>') first.")
-
+            raise Exception("class_name is None.")
         if self._target is not None:
-            if hasattr(self._target, "unique"):
-                return list(self._target.unique())
-            else:
-                return list(set(self._target))
+            return list(self._target.unique())
+        raise KeyError(f"Target '{self.class_name}' not found in dataset.")
 
-        raise KeyError(f"Target column '{self.class_name}' not found in dataset or descriptor.")
-
-    # -------------------------
-    # Mutators / utilities
-    # -------------------------
-    def set_class_name(self, class_name: str):
-        """
-        Set or change the dataset's class_name (target). This will:
-          - move the existing column (if present) from features into target, or
-          - if the column is not present in features but exists elsewhere, raise.
-        NOTE: changing class_name after initialization is allowed but should be used with care.
-        """
+    def set_class_name(self, class_name: str) -> None:
+        """Change target column name, moving column from features to target."""
         if class_name == self.class_name:
             return
 
-        # If new class exists in features, extract it
         if class_name in self._data.columns:
             self._target = self._data[class_name].copy()
             self._data = self._data.drop(columns=[class_name])
             self.class_name = class_name
-            # sanitize hints and recompute descriptor
             self._sanitize_column_hints()
             self.update_descriptor()
             return
 
-        raise KeyError(f"Column '{class_name}' not found among features; cannot set as target.")
+        raise KeyError(f"Column '{class_name}' not found among features.")

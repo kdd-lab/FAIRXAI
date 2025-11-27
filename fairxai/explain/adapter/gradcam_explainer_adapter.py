@@ -12,13 +12,23 @@ from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAd
 
 class GradCamExplainerAdapter(GenericExplainerAdapter):
     """
-    Adapter for Grad-CAM explanations using the pytorch-grad-cam library.
-    Only supports image datasets and models with spatial activations (CNNs/ViTs).
+    Adapter for Grad-CAM explanations using pytorch-grad-cam.
+
+    Supports only image datasets and PyTorch models with spatial layers (CNNs, Transformers with spatial attention).
+    Produces localized visual explanations as heatmaps. Global explanations are not supported.
     """
     explainer_name = "gradcam"
     supported_datasets = ["image"]
-    # We enforce the usage of TorchBBox (PyTorch models) for spatial activations.
-    supported_models = ["torch_cnn", "torch_mlp", "torch_rnn", "torch_gru", "torch_generic", "torch_transformer"]
+
+    # Explicitly list supported PyTorch module classes
+    supported_models = [
+        "Conv1d",
+        "Conv2d",
+        "Conv3d",
+        "Sequential",
+        "GraphModule",
+        "TransformerEncoderLayer",
+    ]
 
     def __init__(self, model: AbstractBBox, dataset):
         """

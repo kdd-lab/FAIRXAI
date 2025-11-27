@@ -63,3 +63,26 @@ class DatasetFactory:
 
         # For all other dataset types, use the standard constructor
         return dataset_class(data, class_name=class_name)
+
+    @classmethod
+    def get_class(cls, dataset_type: str):
+        """
+        Return the dataset class corresponding to the dataset_type string.
+
+        Parameters:
+            dataset_type (str): "tabular", "image", "text", or "timeseries"
+
+        Returns:
+            Dataset subclass (type)
+
+        Raises:
+            ValueError: if dataset_type is unsupported
+        """
+        dataset_type = dataset_type.lower()
+        if dataset_type not in cls._registry:
+            raise ValueError(
+                f"Unsupported dataset type '{dataset_type}'. "
+                f"Supported types are: {list(cls._registry.keys())}"
+            )
+        return cls._registry[dataset_type]
+
