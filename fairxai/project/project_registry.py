@@ -8,13 +8,13 @@ from fairxai.project.project import Project
 
 class ProjectRegistry:
     """
-        Registry to store and manage multiple explainability projects.
+    Registry to store and manage multiple explainability projects.
 
-        This registry acts as a central catalog of active or stored projects,
-        allowing them to be saved, reloaded, and managed programmatically.
+    Acts as a central catalog of active or stored projects, allowing them
+    to be saved, reloaded, and managed programmatically.
 
-        Each project is uniquely identified by its UUID.
-        """
+    Each project is uniquely identified by its UUID.
+    """
     _instances = {}
 
     def __new__(cls, workspace_path: str):
@@ -25,36 +25,44 @@ class ProjectRegistry:
     def __init__(self, workspace_base: str):
         """
         Initialize a registry bound to a workspace base directory.
+
+        Only loads projects that have a valid `project.json` file.
         """
         self.workspace_base = workspace_base
         os.makedirs(self.workspace_base, exist_ok=True)
         self._projects: Dict[str, Project] = {}
 
         entries = os.listdir(workspace_base)
-
-        # Skip non-directories
         if not entries:
-            return
+            return  # Workspace empty, nothing to load
 
         for project_dir in entries:
-            self.load_project(project_dir)
+            project_path = os.path.join(workspace_base, project_dir)
+            metadata_path = os.path.join(project_path, "project.json")
+            if os.path.isdir(project_path) and os.path.exists(metadata_path):
+                try:
+                    self.load_project(project_dir)
+                except Exception as e:
+                    logger.warning(f"Skipping project '{project_dir}': {e}")
+            else:
+                logger.debug(f"Skipping non-project entry: {project_dir}")
 
     # ============================================================
     # Basic management
     # ============================================================
     def add(self, project: Project) -> None:
-        """Registers a project in the registry."""
+        """Register a project in the registry."""
         if project.id in self._projects:
             logger.warning(f"Project {project.id} already registered, overwriting.")
         self._projects[project.id] = project
         logger.info(f"Project {project.id} added to registry.")
 
     def get(self, project_id: str) -> Optional[Project]:
-        """Retrieves a project by its ID."""
+        """Retrieve a project by its ID."""
         return self._projects.get(project_id)
 
     def remove(self, project_id: str) -> None:
-        """Removes a project from the registry."""
+        """Remove a project from the registry."""
         if project_id in self._projects:
             del self._projects[project_id]
             logger.info(f"Project {project_id} removed from registry.")
@@ -62,19 +70,23 @@ class ProjectRegistry:
             logger.warning(f"Tried to remove unknown project {project_id}.")
 
     def list_all(self) -> List[str]:
-        """Returns a list of all project IDs currently in the registry."""
+        """Return a list of all project IDs currently in the registry."""
         return list(self._projects.keys())
 
     def get_project_path(self, project_id: str) -> str:
-        """Returns the workspace path of a given project."""
+        """Return the workspace path of a given project."""
         return os.path.join(self.workspace_base, project_id)
 
     # ============================================================
     # Persistence
     # ============================================================
+    def load_project(self, project_id: str) -> Project:
+        """
+        Load an existing project by ID from disk.
 
-    def load_project(self, project_id: str) -> Optional[Project]:
-        """Loads an existing project by ID from disk."""
+        Raises:
+            FileNotFoundError: if the project.json file does not exist
+        """
         project_dir = os.path.join(self.workspace_base, project_id)
         metadata_path = os.path.join(project_dir, "project.json")
 
@@ -90,6 +102,6 @@ class ProjectRegistry:
         return project
 
     def clear(self) -> None:
-        """Removes all registered projects."""
+        """Remove all registered projects."""
         self._projects.clear()
         logger.info("Registry cleared.")
