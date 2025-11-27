@@ -126,3 +126,5 @@ class GenericExplainerAdapter(ABC):
         model_type = model_type
         supported = [m for m in cls.supported_models]
         return model_type in supported or cls.WILDCARD in supported
+
+    #TODO: method to update supported models

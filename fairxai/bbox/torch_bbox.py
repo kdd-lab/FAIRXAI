@@ -58,11 +58,11 @@ class TorchBBox(AbstractBBox):
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model file '{path}' not found")
-        if self.model is None:
-            if model_cls is None:
-                raise ValueError("model_cls must be provided to instantiate a PyTorch model")
-            self.model = model_cls()
-        self.model.load_state_dict(torch.load(path, map_location=self.device))
-        self.model.to(self.device)
-        self.model.eval()
-        logger.info(f"TorchBBox model loaded from {path}")
+
+        #FIXME: this loading method is wrong!
+
+        loaded_pytorch_model = torch.load(path, map_location=torch.device(self.device))
+        loaded_pytorch_model.eval()
+
+        logger.info(f"TorchBBox model loaded from {path} "
+                    f"({type(self.model).__name__})")
