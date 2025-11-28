@@ -199,6 +199,7 @@ class Project:
                     key = params["instance_filename"]
                     if hasattr(self.dataset_instance, "get_instance"):
                         instance = self.dataset_instance.get_instance(key)
+                        instance_index = None
                     else:
                         raise TypeError(
                             f"Dataset {type(self.dataset_instance).__name__} does not support filename-based access."

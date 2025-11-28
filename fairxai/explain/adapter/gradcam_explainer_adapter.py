@@ -160,11 +160,9 @@ class GradCamExplainerAdapter(GenericExplainerAdapter):
 
         # overlay
         orig_uint8 = (instance * 255).astype(np.uint8) if instance.max() <= 1.0 else instance.astype(np.uint8)
-        overlay = (0.5*orig_uint8 + 0.5*heatmap_rgb).astype(np.uint8)
 
         # encode images
         heatmap_b64 = self._ndarray_to_base64(heatmap_rgb)
-        overlay_b64 = self._ndarray_to_base64(overlay)
 
         # flatten heatmap to pixel importances
         h, w = heatmap_resized.shape
@@ -172,7 +170,6 @@ class GradCamExplainerAdapter(GenericExplainerAdapter):
 
         visualization_payload = {
             "heatmap_base64": heatmap_b64,
-            "overlay_base64": overlay_b64,
             "shape": (h,w),
             "target_class": target_class,
             "original_size": (orig_w, orig_h),
