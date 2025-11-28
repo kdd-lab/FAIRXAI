@@ -77,9 +77,10 @@ class TabularDataset(Dataset):
         # --------------------------
         # Memory-based dataset
         # --------------------------
+        # FIXME: qui devo chiamare save_memory_data(), ma devo trovare un modo per passargli il path giusto!
         elif isinstance(data, pd.DataFrame):
             self.source_type = "memory"
-            df = data.copy()
+            df = data
         elif isinstance(data, dict):
             self.source_type = "memory"
             df = pd.DataFrame(data)
