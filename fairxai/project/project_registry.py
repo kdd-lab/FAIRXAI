@@ -34,20 +34,26 @@ class ProjectRegistry:
         for project_dir in os.listdir(workspace_base):
             self.load_project(project_dir)
 
-        entries = os.listdir(workspace_base)
-        if not entries:
-            return  # Workspace empty, nothing to load
+        #FIXME: qui non devo caricare tutti i progetti, ma quando aggiungo elimino devo sempre aggiornare self._projects.
+        # list_all in qualche modo dovrebbe restituirmi un dizionario con i metadati principali, nome progetto, uiid, path dataset e modello e cose del genere per ogni progetto
+        # get dovrebbe restituirmi il dizionario di un progetto specifico
+        # prevedere il retrieve anche filtrando per nome
+        # load project dovrebbe caricare il progetto da disco e restituire un oggetto Project
 
-        for project_dir in entries:
-            project_path = os.path.join(workspace_base, project_dir)
-            metadata_path = os.path.join(project_path, "project.json")
-            if os.path.isdir(project_path) and os.path.exists(metadata_path):
-                try:
-                    self.load_project(project_dir)
-                except Exception as e:
-                    logger.warning(f"Skipping project '{project_dir}': {e}")
-            else:
-                logger.debug(f"Skipping non-project entry: {project_dir}")
+        # entries = os.listdir(workspace_base)
+        # if not entries:
+        #     return  # Workspace empty, nothing to load
+        #
+        # for project_dir in entries:
+        #     project_path = os.path.join(workspace_base, project_dir)
+        #     metadata_path = os.path.join(project_path, "project.json")
+        #     if os.path.isdir(project_path) and os.path.exists(metadata_path):
+        #         try:
+        #             self.load_project(project_dir)
+        #         except Exception as e:
+        #             logger.warning(f"Skipping project '{project_dir}': {e}")
+        #     else:
+        #         logger.debug(f"Skipping non-project entry: {project_dir}")
 
     # ============================================================
     # Basic management

@@ -1,190 +1,187 @@
-from typing import Any, Optional, Dict, cast, List
+from typing import Any, Dict, List, Optional, Tuple
+import base64
+from io import BytesIO
 
 import numpy as np
+from PIL import Image
 import torch
-from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image
+import torch.nn.functional as F
+
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.base_cam import BaseCAM
 
 from fairxai.bbox import AbstractBBox
 from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
+from fairxai.explain.explaination.feature_importance_explanation import FeatureImportanceExplanation
 
 
 class GradCamExplainerAdapter(GenericExplainerAdapter):
     """
-    Adapter for Grad-CAM explanations using pytorch-grad-cam.
+    Grad-CAM explainer adapter for image datasets.
+    Accepts np.ndarray images HxWxC (Height × Width × Channels).
+    Computes Grad-CAM on a selected target layer and returns
+    FeatureImportanceExplanation with pixel importances and visualization.
 
-    Supports only image datasets and PyTorch models with spatial layers (CNNs, Transformers with spatial attention).
-    Produces localized visual explanations as heatmaps. Global explanations are not supported.
+    :param model: a BBox wrapper exposing `.model` (torch.nn.Module)
+    :param dataset: dataset object (kept for compatibility)
     """
+
     explainer_name = "gradcam"
     supported_datasets = ["image"]
+    supported_models = ["Conv1d", "Conv2d", "Conv3d", "Sequential", "GraphModule", "TransformerEncoderLayer"]
 
-    # Explicitly list supported PyTorch module classes
-    supported_models = [
-        "Conv1d",
-        "Conv2d",
-        "Conv3d",
-        "Sequential",
-        "GraphModule",
-        "TransformerEncoderLayer",
-    ]
-
-    def __init__(self, model: AbstractBBox, dataset):
-        """
-        Initialize adapter with wrapped model and dataset instance.
-        Args:
-            model: a BBox wrapper whose .model is a torch.nn.Module
-            dataset: dataset instance for image explanation
-        """
+    def __init__(self, model: AbstractBBox, dataset: Any) -> None:
         super().__init__(model, dataset)
         self.torch_model = self._extract_torch_module(model)
-        self.device = next(self.torch_model.parameters()).device if hasattr(self.torch_model,
-                                                                            "parameters") else torch.device("cpu")
-        # User may specify the target layer name in dataset metadata or via parameters; we allow override in instance_params.
-        self.target_layer = None
+        self.device = next(self.torch_model.parameters()).device if any(True for _ in self.torch_model.parameters()) else torch.device("cpu")
+        self.target_layer: Optional[torch.nn.Module] = None
+        self._activations: Optional[torch.Tensor] = None
+        self._gradients: Optional[torch.Tensor] = None
 
     def _extract_torch_module(self, bbox_model: AbstractBBox) -> torch.nn.Module:
-        """
-        Extracts the underlying torch.nn.Module from the BBox wrapper.
-        Raises if not available or not a PyTorch Module.
-        """
         if not hasattr(bbox_model, "model"):
-            raise RuntimeError("Provided model wrapper does not expose `.model` attribute required for Grad-CAM.")
+            raise RuntimeError("Provided model wrapper does not expose `.model` required for Grad-CAM.")
         module = getattr(bbox_model, "model")
         if not isinstance(module, torch.nn.Module):
             raise RuntimeError("Underlying model is not a torch.nn.Module; Grad-CAM unsupported.")
         return module
 
-    def _select_target_layer(
-            self, module: torch.nn.Module, layer_name: Optional[str] = None
-    ) -> torch.nn.Module:
-        """
-        Selects the convolutional or spatial layer to compute CAM.
-        If layer_name is provided, returns that module if found;
-        otherwise, tries to automatically find the last Conv2d layer.
-        """
-        # Case 1: user explicitly provided layer name
+    def _select_target_layer(self, module: torch.nn.Module, layer_name: Optional[str] = None) -> torch.nn.Module:
         if layer_name:
             named_modules: Dict[str, torch.nn.Module] = dict(module.named_modules())
             target_layer = named_modules.get(layer_name)
             if target_layer is None:
                 available = list(named_modules.keys())
-                raise ValueError(
-                    f"Layer name '{layer_name}' not found in model modules. "
-                    f"Available layers include: {available[-10:]}"
-                )
-            return target_layer  # this is a torch.nn.Module
-
-        # Case 2: automatic selection — find last Conv2d layer
+                raise ValueError(f"Layer '{layer_name}' not found. Available (last 10): {available[-10:]}")
+            return target_layer
         conv_layers = [m for m in module.modules() if isinstance(m, torch.nn.Conv2d)]
         if conv_layers:
             return conv_layers[-1]
-
-        # Case 3: fallback — try known transformer-like layers
-        vit_like = [
-            m for m in module.modules()
-            if hasattr(m, "norm") or hasattr(m, "attention")
-        ]
+        vit_like = [m for m in module.modules() if hasattr(m, "norm") or hasattr(m, "attention")]
         if vit_like:
             return vit_like[-1]
+        raise RuntimeError("No suitable layer found; pass `target_layer_name`.")
 
-        raise RuntimeError(
-            "Could not automatically find a suitable convolutional or spatial layer "
-            "in model; please specify `target_layer_name` in adapter params."
-        )
+    def _forward_hook(self, module: torch.nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
+        self._activations = output.detach()
 
-    def explain_instance(self, instance: Any, params: Optional[Dict[str, Any]] = None):
+    def _backward_hook(self, module: torch.nn.Module, grad_input: Tuple, grad_output: Tuple) -> None:
+        self._gradients = grad_output[0].detach()
+
+    def _register_hooks_on_layer(self, layer: torch.nn.Module) -> None:
+        layer.register_forward_hook(self._forward_hook)
+        layer.register_backward_hook(self._backward_hook)
+
+    @staticmethod
+    def _ndarray_to_base64(img: np.ndarray) -> str:
+        """Encode a HxWxC uint8 numpy array as base64 PNG string."""
+        pil = Image.fromarray(img.astype("uint8"))
+        buf = BytesIO()
+        pil.save(buf, format="PNG")
+        return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    def _compute_cam_from_captured(self) -> np.ndarray:
+        """Compute Grad-CAM heatmap from captured activations and gradients."""
+        if self._activations is None or self._gradients is None:
+            raise RuntimeError("Activations or gradients not captured for Grad-CAM.")
+        weights = self._gradients.mean(dim=(1, 2), keepdim=True)  # spatial average
+        cam = (weights * self._activations).sum(dim=1, keepdim=True)
+        cam = F.relu(cam)
+        cam_min = cam.view(cam.size(0), -1).min(dim=1)[0].view(-1, 1, 1, 1)
+        cam = cam - cam_min
+        cam_max = cam.view(cam.size(0), -1).max(dim=1)[0].view(-1, 1, 1, 1)
+        cam_max[cam_max == 0] = 1.0
+        cam = cam / cam_max
+        return cam[0, 0].cpu().numpy()
+
+    def _np_to_nhwc_tensor(self, img: np.ndarray) -> torch.Tensor:
         """
-        Compute a Grad-CAM heatmap for a single image instance.
-        Args:
-            instance: The image data input (numpy array HxWxC or tensor)
-            params: Optional dict with keys:
-                - "target_layer_name": str to select layer
-                - "target_class": int specifying which class to explain
-                - "use_overlay": bool whether to compute overlay (if rgb image provided)
-        Returns:
-            GenericExplanation object containing:
-                - heatmap: 2D list of floats (normalized 0..1)
-                - optionally overlay: image array as list
-                - metadata: shape, target_class
+        Convert HxWxC np.ndarray to NHWC torch tensor with batch dim.
+        Assumes img already has 3 channels; adds batch dimension.
+        Normalizes to [0,1].
         """
-        if params is None:
-            params = {}
-        target_layer_name = params.get("target_layer_name")
-        target_class = params.get("target_class")
-        use_overlay = params.get("use_overlay", False)
+        arr = img.astype(np.float32)
+        if arr.ndim == 2:
+            arr = arr[..., np.newaxis]
+        arr /= 255.0
+        return torch.tensor(arr).unsqueeze(0).to(self.device)  # shape (1,H,W,C)
 
-        # Extract numpy array for the image
-        img_arr = instance
-        if hasattr(instance, "to_array"):
-            img_arr = instance.to_array()
-        img_arr = np.asarray(img_arr).astype(np.float32)
-        # If HxWxC format, scale if needed to 0..1
-        if img_arr.max() > 1.0:
-            img_arr /= 255.0
-        # Convert to CHW tensor
-        if img_arr.ndim == 3:
-            # assume HWC
-            chw = np.transpose(img_arr, (2, 0, 1))
-        elif img_arr.ndim == 2:
-            # single channel
-            chw = np.expand_dims(img_arr, axis=0)
-        else:
-            raise ValueError("Instance array has unsupported number of dimensions for image.")
+    def explain_instance(self, instance: np.ndarray, params: Optional[Dict[str, Any]] = None) -> List[FeatureImportanceExplanation]:
+        """
+        Explain a single image instance using Grad-CAM.
 
-        input_tensor = torch.tensor(chw, dtype=torch.float32, device=self.device).unsqueeze(0)
+        :param instance: np.ndarray HxWxC
+        :param params: optional dict; supported keys:
+                       - "target_layer_name": str
+                       - "target_class": int
+        :returns: list with a single FeatureImportanceExplanation
+        """
+        target_layer_name = params.get("target_layer_name") if params else None
+        target_class = int(params.get("target_class")) if params and "target_class" in params else None
 
-        # Determine target layer
+        # select target layer if needed
         if self.target_layer is None or target_layer_name:
             self.target_layer = self._select_target_layer(self.torch_model, layer_name=target_layer_name)
-        use_cuda: bool = True if self.device.type != "cpu" else False
-        # Build GradCAM object
-        cam = GradCAM(model=self.torch_model, target_layers=[self.target_layer])
+        self._register_hooks_on_layer(self.target_layer)
 
-        # Determine the target class
+        # convert image to NHWC tensor with batch
+        input_tensor = self._np_to_nhwc_tensor(instance)
+
+        # forward pass
+        self.torch_model.zero_grad()
+        input_tensor.requires_grad_(True)
+        output = self.torch_model(input_tensor)  # output can be spatial (1,H,W,num_classes)
+
+        # determine target class if not provided
         if target_class is None:
-            # forward pass, pick predicted class
-            self.torch_model.eval()
-            with torch.no_grad():
-                output = self.torch_model(input_tensor)
-            target_class = int(output.argmax(dim=1).item())
+            if output.ndim == 2:  # (B, num_classes)
+                target_class = int(output[0].argmax().item())
+            elif output.ndim == 4:  # (B, H, W, C)
+                pooled = output.mean(dim=(1, 2))  # global average pooling H,W
+                target_class = int(pooled[0].argmax().item())
+            else:
+                raise RuntimeError(f"Unexpected output shape {output.shape}")
 
-        targets = [ClassifierOutputTarget(target_class)]
-        grayscale_cam = cam(input_tensor=input_tensor, targets=cast(Optional[List[ClassifierOutputTarget]], targets))[
-            0, :]
+        # backward on target logit
+        scalar = output[0, target_class]
+        scalar.backward(retain_graph=False)
 
-        heatmap = grayscale_cam
-        # Norm 0..1
-        heatmap -= heatmap.min()
-        max_val = heatmap.max() if heatmap.max() != 0 else 1.0
-        heatmap = heatmap / max_val
+        # compute Grad-CAM heatmap
+        heatmap = self._compute_cam_from_captured()  # HxW, 0..1
 
-        payload: Dict[str, Any] = {
-            "heatmap": heatmap.tolist(),
-            "shape": heatmap.shape,
-            "target_class": int(target_class)
+        # resize heatmap to original image size
+        orig_h, orig_w = instance.shape[:2]
+        heatmap_img = (heatmap * 255).astype(np.uint8)
+        heatmap_pil = Image.fromarray(heatmap_img)
+        heatmap_resized = np.asarray(heatmap_pil).astype(np.uint8)
+
+        # convert to 3-channel heatmap
+        heatmap_rgb = np.stack([heatmap_resized]*3, axis=-1)
+
+        # overlay
+        orig_uint8 = (instance * 255).astype(np.uint8) if instance.max() <= 1.0 else instance.astype(np.uint8)
+
+        # encode images
+        heatmap_b64 = self._ndarray_to_base64(heatmap_rgb)
+
+        # flatten heatmap to pixel importances
+        h, w = heatmap_resized.shape
+        pixel_importances = {f"{i},{j}": float(heatmap_resized[i,j]/255.0) for i in range(h) for j in range(w)}
+
+        visualization_payload = {
+            "heatmap_base64": heatmap_b64,
+            "shape": (h,w),
+            "target_class": target_class,
+            "original_size": (orig_w, orig_h),
         }
 
-        if use_overlay:
-            # attempt overlay on the original image for visualization
-            try:
-                # show_cam_on_image expects HWC scaled 0..1
-                if img_arr.ndim == 3:
-                    visualization = show_cam_on_image(img_arr, heatmap, use_rgb=True)
-                else:
-                    # replicate channel
-                    vis = np.stack([img_arr, img_arr, img_arr], axis=-1)
-                    visualization = show_cam_on_image(vis, heatmap, use_rgb=True)
-                payload["overlay"] = visualization.tolist()
-            except Exception as e:
-                payload["overlay_error"] = str(e)
+        fi_explanation = FeatureImportanceExplanation(
+            explainer_name=self.explainer_name,
+            data=pixel_importances,
+            visualization=visualization_payload,
+            global_scope=False
+        )
+        return [fi_explanation]
 
-        return self.build_generic_explanation(data=payload, explanation_type=self.LOCAL_EXPLANATION)
-
-    def explain_global(self):
-        """
-        Grad-CAM global explanation is not generally meaningful (visualizes single images),
-        so this adapter raises NotImplementedError.
-        """
+    def explain_global(self) -> List[FeatureImportanceExplanation]:
         raise NotImplementedError("GradCamExplainerAdapter does not support global explanations.")
