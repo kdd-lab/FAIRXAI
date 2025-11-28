@@ -31,8 +31,6 @@ class ProjectRegistry:
         self.workspace_base = workspace_base
         os.makedirs(self.workspace_base, exist_ok=True)
         self._projects: Dict[str, Project] = {}
-        for project_dir in os.listdir(workspace_base):
-            self.load_project(project_dir)
 
         #FIXME: qui non devo caricare tutti i progetti, ma quando aggiungo elimino devo sempre aggiornare self._projects.
         # list_all in qualche modo dovrebbe restituirmi un dizionario con i metadati principali, nome progetto, uiid, path dataset e modello e cose del genere per ogni progetto
