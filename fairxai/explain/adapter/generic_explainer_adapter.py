@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from fairxai.explain.explaination.generic_explanation import GenericExplanation
 from fairxai.logger import logger
@@ -54,7 +54,7 @@ class GenericExplainerAdapter(ABC):
     # ---------------------------
 
     @abstractmethod
-    def explain_instance(self, instance)-> List[GenericExplanation]:
+    def explain_instance(self, instance, params: Optional[dict] = None)-> List[GenericExplanation]:
         """
         Represents an abstract method to explain a specific instance of data.
 

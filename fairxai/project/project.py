@@ -188,9 +188,44 @@ class Project:
             explainer: GenericExplainerAdapter = explainer_cls(model=self.blackbox, dataset=self.dataset_instance)
 
             if mode == "local":
-                instance_index = params["instance_index"]
-                instance = self.dataset_instance[instance_index]
-                explanations_list: list[GenericExplanation] = explainer.explain_instance(instance)
+                params = step.get("params", {})
+
+                # -----------------------------
+                # 1. Fetch instance correctly
+                # -----------------------------
+                instance = None
+
+                if "instance_filename" in params:
+                    key = params["instance_filename"]
+                    if hasattr(self.dataset_instance, "get_instance"):
+                        instance = self.dataset_instance.get_instance(key)
+                        instance_index = None
+                    else:
+                        raise TypeError(
+                            f"Dataset {type(self.dataset_instance).__name__} does not support filename-based access."
+                        )
+
+                elif "instance_index" in params:
+                    key = params["instance_index"]
+                    if hasattr(self.dataset_instance, "get_instance"):
+                        instance = self.dataset_instance.get_instance(key)
+                    else:
+                        instance = self.dataset_instance[key]
+
+                else:
+                    raise ValueError(
+                        "Local explanation requires either 'instance_index' or 'instance_filename' in params."
+                    )
+
+                # ---------------------------------------
+                # 2. Pass params to the explainer
+                #    (this includes hwc_permutation)
+                # ---------------------------------------
+                explanations_list = explainer.explain_instance(
+                    instance,
+                    params=params  # This forwards hwc_permutation, instance_filename and so on
+                )
+
             else:
                 instance_index = None
                 instance = None
@@ -250,7 +285,7 @@ class Project:
             "timestamp": datetime.now().isoformat(),
             "explainer": explainer_cls.__name__,
             "mode": mode,
-            "instance_index": instance_index,
+            "instance_index": instance_index if instance_index is not None else -1,
             "instance": self._serialize_instance(instance),
             "result": [explanation.visualize() for explanation in explanations_list]
         }
