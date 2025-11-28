@@ -35,23 +35,28 @@ registry = ProjectRegistry(WORKSPACE_BASE)
 # ----------------------------------------------------
 # Create a new project
 # ----------------------------------------------------
-print("Creating Project inside workspace/...")
+# print("Creating Project inside workspace/...")
+#
+# project = Project(
+#     project_name="SIAS with PyTorch",
+#     data=DATA,
+#     dataset_type=DATASET_TYPE,
+#     framework="torch",
+#     workspace_path=WORKSPACE_BASE,
+#     target_variable=TARGET_VARIABLE,
+#     model_params=MODEL_PARAMS,
+#     model_path=MODEL_PATH)
+#
+# registry.add(project)
+#
+# print("Project created:")
+# print(" - ID:", project.id)
+# print(" - Workspace:", project.workspace_path)
 
-project = Project(
-    project_name="SIAS with PyTorch",
-    data=DATA,
-    dataset_type=DATASET_TYPE,
-    framework="torch",
-    workspace_path=WORKSPACE_BASE,
-    target_variable=TARGET_VARIABLE,
-    model_params=MODEL_PARAMS,
-    model_path=MODEL_PATH)
+existing_projects = registry.list_all()
+pprint(existing_projects)
 
-registry.add(project)
-
-print("Project created:")
-print(" - ID:", project.id)
-print(" - Workspace:", project.workspace_path)
+project = registry.load_project("6982bdd0-b220-4504-92b1-5ff7e820229a")
 
 # ----------------------------------------------------
 # Run from YAML if available
