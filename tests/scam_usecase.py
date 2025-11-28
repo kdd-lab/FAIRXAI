@@ -39,7 +39,9 @@ MODEL_PARAMS = None
 MODEL_PATH = os.path.join(WORKSPACE_BASE, "usecase_scam_model_class.pkl")
 TARGET_VARIABLE = "target"
 PIPELINE_YAML_LOCAL = os.path.join(WORKSPACE_BASE, "scam_example_pipeline.yaml")
+#target_name, type, sample_name, group
 CATEGORICAL_COLUMNS=["target_name", "type", "sample_name", "group"]
+#group_id,sample_id, target_id,type_id,timestamp
 ORDINAL_COLUMNS=["group_id", "sample_id", "target_id", "type_id", "timestamp"]
 
 df_train=pd.read_csv(DATA)

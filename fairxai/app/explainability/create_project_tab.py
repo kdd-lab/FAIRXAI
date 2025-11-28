@@ -27,7 +27,7 @@ def create_project_page():
 
     framework = st.selectbox("Tipo di modello", ["sklearn", "torch"])
     if framework=="torch":
-        device = st.selectbox("Devide", ["cpu", "gpu"])
+        device = st.selectbox("Device", ["cpu", "gpu"])
     else: device = "cpu"
 
     # ==============================
@@ -58,18 +58,34 @@ def create_project_page():
 
     model_params = st.text_area("Parametri del modello (JSON)", value="{}")
 
-    uploaded_file = st.file_uploader("Carica dataset", type=["csv"])
+    if not os.path.isdir(current_dir):
+        st.error("Percorso non valido.")
+        current_dir = str(base_path)
+
+    try:
+        files = os.listdir(current_dir)
+        dataset_files = [f for f in files if f.endswith(('.csv'))]
+        selected_file = st.selectbox("Seleziona un file dataset:", dataset_files)
+        dataset_path = os.path.join(current_dir, selected_file) if selected_file else None
+    except Exception as e:
+        st.error(f"Errore nella navigazione: {e}")
+        dataset_path = None
+
     creating = st.button("Crea progetto")
+
+    # ==============================
+    # CREAZIONE DEL PROGETTO
+    # ==============================
 
     if creating is True:
         try:
             model_params = json.loads(model_params)
             data = None
 
-            if uploaded_file is not None:
+            if dataset_path is not None:
                 if dataset_type == "tabular":
                     try:
-                        data = pd.read_csv(uploaded_file)
+                        data = pd.read_csv(dataset_path)
                         st.success(f"Dataset caricato con successo! {data.shape[0]} righe × {data.shape[1]} colonne.")
                         st.dataframe(data.head())
                     except Exception as e:
@@ -77,12 +93,12 @@ def create_project_page():
                         return
                 else:
                     # Per altri tipi di dataset (immagini, testo, ecc.)
-                    data = uploaded_file.read()
+                    data = None
 
             registry = ProjectRegistry(workspace)
             project = Project(
                 project_name= project_name,
-                data=data,
+                data=dataset_path,
                 dataset_type=dataset_type,
                 framework=framework,
                 model_path=model_path or None,

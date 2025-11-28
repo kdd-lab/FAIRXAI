@@ -88,6 +88,7 @@ class Project:
             os.makedirs(os.path.join(self.workspace_path, "pipelines"), exist_ok=True)
             os.makedirs(os.path.join(self.workspace_path, "logs"), exist_ok=True)
 
+
         # Store model & dataset parameters
         self.model_path: Optional[str] = model_path
         self.model_params: Optional[Dict[str, Any]] = model_params

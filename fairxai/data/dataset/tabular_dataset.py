@@ -79,7 +79,7 @@ class TabularDataset(Dataset):
         # --------------------------
         elif isinstance(data, pd.DataFrame):
             self.source_type = "memory"
-            df = data.copy()
+            df = data
         elif isinstance(data, dict):
             self.source_type = "memory"
             df = pd.DataFrame(data)
