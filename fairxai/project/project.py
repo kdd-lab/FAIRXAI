@@ -165,7 +165,7 @@ class Project:
         :return: List of explanation records
         """
         results: List[Dict[str, Any]] = []
-        explainer_map = {cls.__name__.lower(): cls for cls in self.explainers}
+        explainer_map = {cls.explainer_name: cls for cls in self.explainers}
 
         for step in pipeline:
             explainer_name = step.get("explainer")
@@ -179,13 +179,12 @@ class Project:
             if mode not in ("local", "global"):
                 raise ValueError(f"Invalid mode '{mode}' for explainer '{explainer_name}'")
 
-            explainer_key = explainer_name.lower()
-            if explainer_key not in explainer_map:
+            if explainer_name not in explainer_map:
                 raise ValueError(
                     f"Explainer '{explainer_name}' not compatible for dataset '{self.dataset_type}' "
                     f"and framework '{self.framework}'. Available: {list(explainer_map.keys())}"
                 )
-            explainer_cls = explainer_map[explainer_key]
+            explainer_cls = explainer_map[explainer_name]
             explainer: GenericExplainerAdapter = explainer_cls(model=self.blackbox, dataset=self.dataset_instance)
 
             if mode == "local":
@@ -207,11 +206,11 @@ class Project:
                         )
 
                 elif "instance_index" in params:
-                    key = params["instance_index"]
+                    instance_index = params["instance_index"]
                     if hasattr(self.dataset_instance, "get_instance"):
-                        instance = self.dataset_instance.get_instance(key)
+                        instance = self.dataset_instance.get_instance(instance_index )
                     else:
-                        instance = self.dataset_instance[key]
+                        instance = self.dataset_instance[instance_index ]
 
                 else:
                     raise ValueError(

@@ -6,53 +6,44 @@ from fairxai.project.project_registry import ProjectRegistry
 
 
 def run_pipeline_page():
-    st.subheader("Esegui una pipeline di spiegazioni")
+    st.subheader("Esegui la spiegazione del progetto caricato")
+    project = st.session_state.get("current_project", None)
 
-    workspace_path = os.path.abspath(os.path.normpath(os.path.join(os.getcwd(), "..","..","workspace")))
-
-    registry = ProjectRegistry(workspace_path)
-    project_ids = registry.list_all()
-
-    if not project_ids:
-        st.info("Nessun progetto disponibile per l’esecuzione.")
+    if project is None:
+        st.warning("⚠️ Nessun progetto caricato. Vai prima nella tab 'Progetti' e carica un progetto.")
         return
 
-    selected_id = st.selectbox("Seleziona un progetto:", project_ids)
-    project = registry.load_project(selected_id)
+    st.info(f"`{project.id}` ({project.model_type} su {project.dataset_type})")
 
-    st.write(f"Project ID: `{project.id}` — Model: `{project.model_type}`")
+    # Mostra gli explainers compatibili
+    explainer_names = [cls.explainer_name for cls in project.explainers]
+    if not explainer_names:
+        st.error("Nessuno spiegatore compatibile trovato per questo progetto.")
+        return
 
-    st.markdown("Carica pipeline YAML")
-    uploaded_yaml = st.file_uploader("File YAML", type=["yaml", "yml"])
+    selected_explainer = st.selectbox("Scegli uno spiegatore", explainer_names)
+    mode = st.radio("Modalità di spiegazione", ["local", "global"], horizontal=True)
 
-    if uploaded_yaml and st.button("Esegui pipeline YAML"):
+    params = {}
+    if mode == "local":
+        instance_index = st.number_input("Indice dell'istanza da spiegare", min_value=0, step=1)
+        params["instance_index"] = int(instance_index)
+
+    if st.button("Esegui spiegazione"):
         try:
-            with open(os.path.join(project.workspace_path, "temp_pipeline.yaml"), "wb") as f:
-                f.write(uploaded_yaml.read())
-
-            results = project.run_pipeline_from_yaml(f.name)
-            st.success(f"Pipeline eseguita con successo! {len(results)} spiegazioni generate.")
-        except Exception as e:
-            st.error(f"Errore durante l’esecuzione della pipeline: {e}")
-
-    st.markdown("---")
-    st.markdown("Oppure definisci una pipeline manuale")
-
-    explainer = st.text_input("Explainer", "ShapExplainerAdapter")
-    mode = st.selectbox("Modalità", ["global", "local"])
-    instance_idx = st.number_input("Indice istanza (solo local)", min_value=0, value=0)
-
-    if st.button("Esegui pipeline manuale"):
-        pipeline = [
-            {
-                "explainer": explainer,
-                "mode": mode,
-                "params": {"instance_index": int(instance_idx)} if mode == "local" else {}
-            }
-        ]
-        try:
+            pipeline = [{"explainer": selected_explainer, "mode": mode, "params": params}]
             results = project.run_explanation_pipeline(pipeline)
-            st.success(f"Pipeline eseguita ({len(results)} spiegazioni).")
-            st.json(results[0])
+            st.success(f"Spiegazione completata! {len(results)} risultato(i) generato/i.")
+            result = results[0]
+
+            st.markdown("### 📊 Risultato")
+            st.json(result)
+
+            # Eventuale rendering grafico se il risultato è un dizionario di feature importance
+            if isinstance(result.get("result"), dict):
+                result_values = result["result"]
+                if all(isinstance(v, (int, float)) for v in result_values.values()):
+                    st.bar_chart(result_values)
+
         except Exception as e:
-            st.error(f"Errore durante l’esecuzione: {e}")
+            st.error(f"Errore nell'esecuzione dello spiegatore: {e}")

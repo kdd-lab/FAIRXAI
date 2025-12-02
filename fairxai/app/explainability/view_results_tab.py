@@ -1,42 +1,32 @@
 import json
-import os
+import plotly.express as px
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-from fairxai.project.project_registry import ProjectRegistry
 
+from fairxai.app.explainability.visualization import visualize_explanation
 def results_page():
-    st.subheader("Visualizza risultati delle spiegazioni")
+    st.title("Visualizza risultati")
 
-    workspace_path = os.path.abspath(os.path.normpath(os.path.join(os.getcwd(), "..", "..", "workspace")))
+    project = st.session_state.get("current_project", None)
 
-    registry = ProjectRegistry(workspace_path)
-    project_ids = registry.list_all()
-
-    if not project_ids:
-        st.info("Nessun progetto disponibile.")
+    results_dir = Path(project.workspace_path) / "results"
+    if not results_dir.exists():
+        st.info("Nessun risultato trovato per questo progetto.")
         return
 
-    selected_id = st.selectbox("Seleziona un progetto:", project_ids)
-    project = registry.load_project(selected_id)
-
-    results_dir = os.path.join(project.workspace_path, "results")
-    result_files = [f for f in os.listdir(results_dir) if f.endswith(".json")]
-
+    result_files = list(results_dir.glob("*.json"))
     if not result_files:
-        st.warning("Nessuna spiegazione trovata.")
+        st.info("Nessun risultato trovato nella cartella results.")
         return
 
-    selected_result = st.selectbox("Scegli una spiegazione:", result_files)
-    result_path = os.path.join(results_dir, selected_result)
+    selected_file = st.selectbox("Seleziona risultato:", [f.name for f in result_files])
+    with open(results_dir / selected_file, "r") as f:
+        data = json.load(f)
 
-    with open(result_path, "r") as f:
-        record = json.load(f)
+    st.markdown(f"### 📄 Risultato: `{selected_file}`")
+    st.write(f"**Explainer:** {data['explainer']} | **Modalità:** {data['mode']} | **Timestamp:** {data['timestamp']}")
 
-    st.write(f"**Explainer:** {record['explainer']} | **Modalità:** {record['mode']}")
-    st.json(record["result"])
-
-    if "feature_importance" in record["result"]:
-        fi = record["result"]["feature_importance"]
-        df = pd.DataFrame(fi.items(), columns=["feature", "importance"])
-        st.bar_chart(df.set_index("feature"))
+    for expl in data.get("result", []):
+        visualize_explanation(expl)
