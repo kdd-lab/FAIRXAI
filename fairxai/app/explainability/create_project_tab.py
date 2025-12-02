@@ -47,7 +47,7 @@ def create_project_page():
     try:
         files = os.listdir(current_dir)
         # mostra solo file comuni di modelli
-        model_files = [f for f in files if f.endswith(('.pkl', '.pth', '.joblib', '.sav'))]
+        model_files = [f for f in files if f.endswith(('.pkl', '.pth', '.joblib', '.sav','.pt'))]
         selected_file = st.selectbox("Seleziona un file modello:", model_files)
         model_path = os.path.join(current_dir, selected_file) if selected_file else None
     except Exception as e:
@@ -62,14 +62,26 @@ def create_project_page():
         st.error("Percorso non valido.")
         current_dir = str(base_path)
 
-    try:
-        files = os.listdir(current_dir)
-        dataset_files = [f for f in files if f.endswith(('.csv'))]
-        selected_file = st.selectbox("Seleziona un file dataset:", dataset_files)
-        dataset_path = os.path.join(current_dir, selected_file) if selected_file else None
-    except Exception as e:
-        st.error(f"Errore nella navigazione: {e}")
-        dataset_path = None
+    data = st.selectbox("Tipo di dato", ["singolo file", "folder"])
+    if data=='folder':
+        try:
+            files = os.listdir(current_dir)
+            dataset_dir = [d for d in files if os.path.isdir(os.path.join(current_dir,d))]
+            selected_file = st.selectbox("Seleziona un file dataset:", dataset_dir)
+            dataset_path = os.path.join(current_dir, selected_file) if selected_file else None
+        except Exception as e:
+            st.error(f"Errore nella navigazione: {e}")
+            dataset_path = None
+
+    elif data=="singolo file":
+        try:
+            files = os.listdir(current_dir)
+            dataset_files = [f for f in files if f.endswith(('.csv'))]
+            selected_file = st.selectbox("Seleziona un file dataset:", dataset_files)
+            dataset_path = os.path.join(current_dir, selected_file) if selected_file else None
+        except Exception as e:
+            st.error(f"Errore nella navigazione: {e}")
+            dataset_path = None
 
     creating = st.button("Crea progetto")
 
@@ -83,7 +95,7 @@ def create_project_page():
             data = None
 
             if dataset_path is not None:
-                if dataset_type == "tabular":
+                if dataset_type == "tabular" and data=="singolo file":
                     try:
                         data = pd.read_csv(dataset_path)
                         st.success(f"Dataset caricato con successo! {data.shape[0]} righe × {data.shape[1]} colonne.")
@@ -91,9 +103,7 @@ def create_project_page():
                     except Exception as e:
                         st.error(f"Errore nel caricamento del CSV: {e}")
                         return
-                else:
-                    # Per altri tipi di dataset (immagini, testo, ecc.)
-                    data = None
+
 
             registry = ProjectRegistry(workspace)
             project = Project(
@@ -104,9 +114,9 @@ def create_project_page():
                 model_path=model_path or None,
                 model_params=model_params,
                 workspace_path=workspace,
-                target_variable=target_variable,
-                categorical_columns=[c.strip() for c in categorical_columns.split(",") if categorical_columns!= None ],
-                ordinal_columns=[c.strip() for c in ordinal_columns.split(",") if ordinal_columns!= None ],
+                target_variable=target_variable if target_variable!= None else None,
+                categorical_columns=[c.strip() for c in categorical_columns.split(",")]  if categorical_columns!= None  else None,
+                ordinal_columns=[c.strip() for c in ordinal_columns.split(",")]  if ordinal_columns!= None else None,
                 device=device,
             )
             registry.add(project)

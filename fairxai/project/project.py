@@ -48,7 +48,8 @@ class Project:
             categorical_columns: Optional[List[str]] = None,
             ordinal_columns: Optional[List[str]] = None,
             device: str = "cpu",
-            is_reload: bool = False
+            is_reload: bool = False,
+            id: str = None
     ):
         """
         Initialize a new project or reload an existing one.
@@ -69,7 +70,7 @@ class Project:
         :param device: Device for Torch models ('cpu' or 'cuda')
         :param is_reload: If True, indicates that this project is being reloaded and folders should not be recreated
         """
-        self.id: str = str(uuid.uuid4())
+        self.id: str = str(uuid.uuid4()) if is_reload is False else id
         self.created_at: datetime = datetime.now()
         self.project_name: str = project_name
         self.dataset_type: Optional[str] = dataset_type
@@ -96,7 +97,7 @@ class Project:
         self.target_variable: Optional[str] = target_variable
         self.categorical_columns: Optional[List[str]] = categorical_columns
         self.ordinal_columns: Optional[List[str]] = ordinal_columns
-
+        
         # -------------------------
         # Dataset initialization
         # -------------------------
@@ -360,10 +361,9 @@ class Project:
             categorical_columns=project_metadata["categorical_columns"],
             ordinal_columns=project_metadata["ordinal_columns"],
             device=project_metadata["device"],
-            is_reload=True
+            is_reload=True,
+            id=project_metadata["id"]
         )
-
-        project.id = project_metadata["id"]
         project.created_at = datetime.fromisoformat(project_metadata["created_at"])
         return project
 

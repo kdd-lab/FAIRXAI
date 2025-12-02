@@ -1,3 +1,5 @@
+from collections import Counter
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -60,18 +62,79 @@ def visualize_explanation(expl):
     # Rule-Based Explanation
     # ============================================================
     elif expl_type == "RuleBasedExplanation":
+        expl_type = expl.get("explanation_type", "RuleBasedExplanation")
+        explainer_name = expl.get("explainer_name", "Explainer sconosciuto")
         rules = expl.get("rules", [])
+
+        st.markdown(f"Regole generate da **{explainer_name}** ({expl_type})")
+
         if not rules:
             st.info("Nessuna regola disponibile.")
+            return
+
+        # --- Analisi statistica sulle feature coinvolte nelle regole
+        all_features = []
+        for rule in rules:
+            for p in rule.get("premises", []):
+                all_features.append(p.get("attr"))
+
+        if all_features:
+            freq = Counter(all_features)
+            df_freq = pd.DataFrame(freq.items(), columns=["Feature", "Occorrenze"]).sort_values("Occorrenze",
+                                                                                                ascending=True)
+
+            fig = px.bar(
+                df_freq,
+                x="Occorrenze",
+                y="Feature",
+                orientation="h",
+                color="Occorrenze",
+                color_continuous_scale="Viridis",
+                title="Frequenza delle feature nelle regole",
+            )
+            fig.update_layout(
+                height=max(400, len(df_freq) * 20),
+                yaxis=dict(autorange="reversed"),
+                plot_bgcolor="white",
+                margin=dict(l=100, r=30, t=50, b=30),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        # --- Visualizzazione dettagliata delle regole
+        st.subheader("📜 Dettaglio delle regole")
+
         for i, rule in enumerate(rules):
-            with st.expander(f"Regola #{i + 1}"):
-                premises = rule.get("premises", [])
-                consequence = rule.get("consequence", {})
+            premises = rule.get("premises", [])
+            consequence = rule.get("consequence", {})
+
+            with st.expander(f"🔹 Regola #{i + 1}"):
+                # Tabella delle premesse
                 if premises:
-                    st.markdown("**Premesse:**")
-                    st.dataframe(pd.DataFrame(premises))
-                st.markdown("**Conseguenza:**")
-                st.json(consequence)
+                    df_premises = pd.DataFrame(premises)
+                    st.markdown("**Premesse (SE):**")
+                    st.dataframe(df_premises, use_container_width=True)
+                else:
+                    st.text("Nessuna premessa definita.")
+
+                # Conseguenza evidenziata
+                if consequence:
+                    attr = consequence.get("attr", "?")
+                    op = consequence.get("op", "=")
+                    val = consequence.get("val", "?")
+                    st.markdown(f"**Allora (→):** `{attr} {op} {val}`")
+                else:
+                    st.text("Nessuna conseguenza definita.")
+
+        # Tabella riassuntiva finale
+        with st.expander("📋 Tutte le regole in formato testo"):
+            rules_text = []
+            for rule in rules:
+                parts = [f"{p.get('attr')} {p.get('op')} {p.get('val')}" for p in rule.get("premises", [])]
+                cond = " AND ".join(parts)
+                cons = rule.get("consequence", {})
+                cons_str = f"{cons.get('attr')} {cons.get('op')} {cons.get('val')}"
+                rules_text.append(f"SE {cond} → {cons_str}")
+            st.write("\n\n".join(rules_text))
 
     # ============================================================
     # Counterfactual Rule Explanation

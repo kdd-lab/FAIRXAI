@@ -26,8 +26,24 @@ def run_pipeline_page():
 
     params = {}
     if mode == "local":
-        instance_index = st.number_input("Indice dell'istanza da spiegare", min_value=0, step=1)
-        params["instance_index"] = int(instance_index)
+
+        if project.dataset_type=='tabular':
+            instance_index = st.number_input("Indice dell'istanza da spiegare", min_value=0, step=1)
+            params["instance_index"] = int(instance_index)
+
+        elif project.dataset_type=='image':
+            dataset_files = [f for f in project.dataset_instance.filenames]
+            instance_filename= st.selectbox("Seleziona un file dataset:", dataset_files)
+            permutation = st.selectbox("Seleziona la permutazione:", [[0, 1, 2],
+                                                                      [0, 2, 1],
+                                                                      [1, 0, 2],
+                                                                      [1, 2, 0],
+                                                                      [2, 1, 0],
+                                                                      [2, 0, 1],
+                                                                      ])
+
+            params["hwc_permutation"] = [0, 1, 2]
+            params["instance_filename"] = instance_filename
 
     if st.button("Esegui spiegazione"):
         try:
