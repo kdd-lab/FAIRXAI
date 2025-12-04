@@ -25,9 +25,12 @@ def results_page():
             data = json.load(f)
 
         st.markdown(f"### 📄 Risultato: `{selected_file}`")
-        st.write(f"**Explainer:** {data['explainer']} | **Modalità:** {data['mode']} | **Timestamp:** {data['timestamp']}")
+        st.write(f"**Explainer:** {data['explainer']}")
+        st.write(f"**Modalità:** {data['mode']}")
+        st.write(f"**Timestamp:** {data['timestamp']}")
+        st.write(f"**Tipo dati:** {project.dataset_type}")
 
         for expl in data.get("result", []):
-            visualize_explanation(expl)
+            visualize_explanation(expl, data_type=project.dataset_type)
     else:
         st.markdown(f"Caricare un progetto tra quelli a disposizione")

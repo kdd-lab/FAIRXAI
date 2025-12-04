@@ -7,9 +7,6 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-from pytorch_grad_cam.base_cam import BaseCAM
-
 from fairxai.bbox import AbstractBBox
 from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
 from fairxai.explain.explaination.feature_importance_explanation import FeatureImportanceExplanation
