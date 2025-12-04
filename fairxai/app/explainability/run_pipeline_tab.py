@@ -2,15 +2,12 @@ import os
 
 import streamlit as st
 
-from fairxai.project.project_registry import ProjectRegistry
-
-
 def run_pipeline_page():
     st.subheader("Esegui la spiegazione del progetto caricato")
     project = st.session_state.get("current_project", None)
 
     if project is None:
-        st.warning("⚠️ Nessun progetto caricato. Vai prima nella tab 'Progetti' e carica un progetto.")
+        st.warning("Nessun progetto caricato. Vai prima nella tab 'Progetti' e carica un progetto.")
         return
 
     st.info(f"`{project.id}` ({project.model_type} su {project.dataset_type})")
@@ -46,7 +43,7 @@ def run_pipeline_page():
             st.success(f"Spiegazione completata! {len(results)} risultato(i) generato/i.")
             result = results[0]
 
-            st.markdown("### 📊 Risultato")
+            st.markdown("###Risultato")
             st.json(result)
 
             # Eventuale rendering grafico se il risultato è un dizionario di feature importance

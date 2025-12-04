@@ -31,6 +31,6 @@ def results_page():
         st.write(f"**Tipo dati:** {project.dataset_type}")
 
         for expl in data.get("result", []):
-            visualize_explanation(expl, data_type=project.dataset_type)
+            visualize_explanation(expl, data_type=project.dataset_type, instance_str = data['instance'])
     else:
         st.markdown(f"Caricare un progetto tra quelli a disposizione")
