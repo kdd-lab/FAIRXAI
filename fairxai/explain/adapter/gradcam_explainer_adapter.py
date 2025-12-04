@@ -153,21 +153,14 @@ class GradCamExplainerAdapter(GenericExplainerAdapter):
         heatmap_resized = np.asarray(heatmap_pil).astype(np.uint8)
 
         # convert to 3-channel heatmap
-        heatmap_rgb = np.stack([heatmap_resized]*3, axis=-1)
-
-        # overlay
-        orig_uint8 = (instance * 255).astype(np.uint8) if instance.max() <= 1.0 else instance.astype(np.uint8)
-
-        # encode images
-        heatmap_b64 = self._ndarray_to_base64(heatmap_rgb)
+        #heatmap_rgb = np.stack([heatmap_resized]*3, axis=-1)
 
         # flatten heatmap to pixel importances
         h, w = heatmap_resized.shape
         pixel_importances = {f"{i},{j}": float(heatmap_resized[i,j]/255.0) for i in range(h) for j in range(w)}
 
         visualization_payload = {
-            "heatmap_base64": heatmap_b64,
-            "shape": (h,w),
+            "heatmap": heatmap,
             "target_class": target_class,
             "original_size": (orig_w, orig_h),
         }
