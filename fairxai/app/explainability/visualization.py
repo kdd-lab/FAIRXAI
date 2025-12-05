@@ -69,22 +69,13 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
 
         elif data_type == "image":
             visualization = expl.get("visualization", {})
-            heatmap = visualization.get("heatmap")
+            overlay = visualization.get("overlay")
             original_size = visualization.get("original_size", None)
 
             original_img = None
 
-            if instance_str:
-                try:
-                    numbers  = np.array(instance_str, dtype=np.uint8)
-                    original_image_array = numbers.reshape((original_size[1],original_size[0],3))
-                    original_image = Image.fromarray(original_image_array, 'RGB')
-                    #st.image(original_image, caption="Immagine Originale Ricostruita", use_column_width=True)
-                except Exception as e:
-                    st.warning(f"⚠️ Errore nella ricostruzione dell'immagine originale: {e}")
-
             # Heatmap Grad-CAM
-            if heatmap:
+            if overlay:
                 try:
                     numbers = np.array(instance_str, dtype=np.uint8)
                     original_image_array = numbers.reshape((original_size[1], original_size[0], 3))
@@ -98,9 +89,9 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
                         else:
                             st.info("Immagine originale non disponibile.")
                     with col2:
-                        heatmap_num = np.array(heatmap, dtype=np.float32)
-                        heatmap_image_array = heatmap_num.reshape((48, 42))
-                        heatmap_image = Image.fromarray(heatmap_image_array, mode='L')
+                        heatmap_num = np.array(overlay, dtype=np.uint8)
+                        heatmap_image_array = heatmap_num.reshape((original_size[1], original_size[0], 3))
+                        heatmap_image = Image.fromarray(heatmap_image_array, mode='RGB')
                         st.image(heatmap_image, caption="🔥 Heatmap (GradCAM)", use_container_width=True)
 
                 except Exception as e:
@@ -159,20 +150,38 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
 
         if data_type == "tabular":
             st.subheader("📉 Regole controfattuali (tabular)")
+
+            rule_rows = []
             for i, rule in enumerate(rules):
-                with st.expander(f"Counterfactual #{i + 1}"):
-                    premises = rule.get("premises", [])
-                    consequence = rule.get("consequence", {})
-                    if premises:
-                        st.dataframe(pd.DataFrame(premises))
-                    if consequence:
-                        st.markdown(f"**→ Conseguenza:** `{consequence.get('attr')} {consequence.get('op')} {consequence.get('val')}`")
+                premises = rule.get("premises", [])
+                consequence = rule.get("consequence", {})
+
+                premises_lines = "\n".join([f"- `{p['attr']} {p['op']} {p['val']:.3e}`" for p in premises])
+                consequence_txt = f"`{consequence.get('attr', '?')} {consequence.get('op', '=')} {consequence.get('val', '?')}`"
+
+                rule_rows.append({
+                    "Premesse": premises_lines,
+                    "Conseguenza": consequence_txt
+                })
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown("**Premesse:**")
+            with col2:
+                st.markdown("**Conseguenza:**")
+            # Mostra le regole in modo compatto con colonne
+            for i, r in enumerate(rule_rows, start=1):
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(r["Premesse"])
+                with col2:
+                    st.markdown(r["Conseguenza"])
+                st.markdown("---")
 
         elif data_type == "image":
-            st.subheader("📉 Controfatti per immagini")
+            st.subheader("📉 Controfattuali per immagini")
             visualization = expl.get("visualization", {})
-            if "heatmap_base64" in visualization:
-                image_data = base64.b64decode(visualization["heatmap_base64"])
+            if "overlay" in visualization:
+                image_data = base64.b64decode(visualization["overlay"])
                 image = Image.open(BytesIO(image_data))
                 st.image(image, caption="Regione controfattuale", use_container_width=True)
             else:
