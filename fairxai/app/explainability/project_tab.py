@@ -1,10 +1,11 @@
 import os
+
 import streamlit as st
 
 from fairxai.project.project_registry import ProjectRegistry
 
-def projects_page():
 
+def projects_page():
     st.markdown("### Seleziona il workspace")
 
     # Workspace corrente (manteniamo in sessione)
@@ -40,8 +41,10 @@ def projects_page():
         st.info("Nessun progetto trovato nel workspace selezionato.")
         return
 
-    project_names = {p["id"]: f'{p.get("project_name", "Project")} - {p.get("dataset_type")} - {p.get("model_type")}' for p in projects}
-    selected_id = st.selectbox("Seleziona progetto:", list(project_names.keys()), format_func=lambda x: project_names[x])
+    project_names = {p["id"]: f'{p.get("project_name", "Project")} - {p.get("dataset_type")} - {p.get("model_type")}'
+                     for p in projects}
+    selected_id = st.selectbox("Seleziona progetto:", list(project_names.keys()),
+                               format_func=lambda x: project_names[x])
 
     # Salva progetto selezionato in session_state
     st.session_state.selected_project_id = selected_id

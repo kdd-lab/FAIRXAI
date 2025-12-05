@@ -14,11 +14,11 @@ class FeatureImportanceExplanation(GenericExplanation):
     """
 
     def __init__(
-        self,
-        explainer_name: str,
-        data: Dict[str, float],
-        visualization: Optional[Dict[str, Any]] = None,
-        global_scope: bool = False,
+            self,
+            explainer_name: str,
+            data: Dict[str, float],
+            visualization: Optional[Dict[str, Any]] = None,
+            global_scope: bool = False,
     ):
         explanation_type = self.GLOBAL_EXPLANATION if global_scope else self.LOCAL_EXPLANATION
 

@@ -54,7 +54,7 @@ class GenericExplainerAdapter(ABC):
     # ---------------------------
 
     @abstractmethod
-    def explain_instance(self, instance, params: Optional[dict] = None)-> List[GenericExplanation]:
+    def explain_instance(self, instance, params: Optional[dict] = None) -> List[GenericExplanation]:
         """
         Represents an abstract method to explain a specific instance of data.
 
@@ -127,4 +127,4 @@ class GenericExplainerAdapter(ABC):
         supported = [m for m in cls.supported_models]
         return model_type in supported or cls.WILDCARD in supported
 
-    #TODO: method to update supported models
+    # TODO: method to update supported models

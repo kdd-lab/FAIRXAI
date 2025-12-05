@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import os
 from typing import Optional, List, Union, Dict, Any
+
+import numpy as np
 import pandas as pd
 from pandas import DataFrame, Series
-import numpy as np
 
 from fairxai.data.dataset import Dataset
 from fairxai.data.descriptor.tabular_descriptor import TabularDatasetDescriptor
@@ -33,12 +35,12 @@ class TabularDataset(Dataset):
     """
 
     def __init__(
-        self,
-        data: Union[DataFrame, str, dict, List[dict]],
-        class_name: Optional[str] = None,
-        categorical_columns: Optional[List[str]] = None,
-        ordinal_columns: Optional[List[str]] = None,
-        dropna: bool = False
+            self,
+            data: Union[DataFrame, str, dict, List[dict]],
+            class_name: Optional[str] = None,
+            categorical_columns: Optional[List[str]] = None,
+            ordinal_columns: Optional[List[str]] = None,
+            dropna: bool = False
     ) -> None:
         """
         Initialize TabularDataset.
@@ -219,9 +221,9 @@ class TabularDataset(Dataset):
     # Descriptor
     # --------------------------
     def update_descriptor(
-        self,
-        categorical_columns: Optional[List[str]] = None,
-        ordinal_columns: Optional[List[str]] = None
+            self,
+            categorical_columns: Optional[List[str]] = None,
+            ordinal_columns: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Compute dataset descriptor based on features-only DataFrame."""
         categorical_columns = categorical_columns or self._categorical_columns

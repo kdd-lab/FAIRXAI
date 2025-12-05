@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 
 import numpy as np
 from PIL import Image
+
 from fairxai.explain.explaination.generic_explanation import GenericExplanation
 
 
@@ -65,7 +66,9 @@ class CounterExampleExplanation(GenericExplanation):
         for k, v in example.items():
             try:
                 # try to detect image-likes: PIL, numpy, bytes, or existing dict wrapper
-                if isinstance(v, Image.Image) or (np is not None and isinstance(v, np.ndarray)) or isinstance(v, (bytes, bytearray)) or (isinstance(v, str) and Path(v).exists()):
+                if isinstance(v, Image.Image) or (np is not None and isinstance(v, np.ndarray)) or isinstance(v, (bytes,
+                                                                                                                  bytearray)) or (
+                        isinstance(v, str) and Path(v).exists()):
                     out[k] = self._serialize_image(v)
                 # if already given in the serialized form (common when reloading), keep as-is
                 elif isinstance(v, dict) and v.get("type") == "base64" and "data" in v:

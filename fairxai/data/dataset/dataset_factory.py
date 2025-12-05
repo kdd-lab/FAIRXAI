@@ -85,4 +85,3 @@ class DatasetFactory:
                 f"Supported types are: {list(cls._registry.keys())}"
             )
         return cls._registry[dataset_type]
-

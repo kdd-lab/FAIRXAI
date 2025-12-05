@@ -1,6 +1,8 @@
 import os
-import joblib
 from typing import Optional, Any, Type
+
+import joblib
+
 from fairxai.bbox import AbstractBBox
 from fairxai.logger import logger
 
@@ -12,10 +14,10 @@ class SklearnBBox(AbstractBBox):
     """
 
     def __init__(
-        self,
-        model: Optional[Any] = None,
-        model_type: str = "sklearn_generic",
-        model_name: str = "sklearn_model"
+            self,
+            model: Optional[Any] = None,
+            model_type: str = "sklearn_generic",
+            model_name: str = "sklearn_model"
     ):
         """
         Initialize the wrapper.

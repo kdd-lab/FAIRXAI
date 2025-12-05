@@ -1,9 +1,9 @@
 import os
-from abc import ABC
+from typing import Optional, Any, Type, Dict
 
 import torch
 import torch.nn as nn
-from typing import Optional, Any, Type, Dict
+
 from fairxai.bbox import AbstractBBox
 from fairxai.logger import logger
 
@@ -26,10 +26,10 @@ class TorchBBox(AbstractBBox):
     """
 
     def __init__(
-        self,
-        model: Optional[nn.Module] = None,
-        device: str = "cpu",
-        model_name: str = "torch_model"
+            self,
+            model: Optional[nn.Module] = None,
+            device: str = "cpu",
+            model_name: str = "torch_model"
     ):
         """
         Initialize the TorchBBox.
@@ -78,7 +78,6 @@ class TorchBBox(AbstractBBox):
 
             X = X.to(self.device)
             return self.model(X)
-
 
     def predict_proba(self, X: Any) -> torch.Tensor:
         """
@@ -141,16 +140,15 @@ class TorchBBox(AbstractBBox):
                 "Expected [N], [N,1], or [N,C] logits."
             )
 
-
     # -------------------------------------------------------------------------
     # Saving API
     # -------------------------------------------------------------------------
     def save(
-        self,
-        path: str,
-        save_state_dict: bool = True,
-        init_args: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None
+            self,
+            path: str,
+            save_state_dict: bool = True,
+            init_args: Optional[Dict[str, Any]] = None,
+            extra: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Save the model to disk.
@@ -222,12 +220,12 @@ class TorchBBox(AbstractBBox):
     # Loading API
     # -------------------------------------------------------------------------
     def load(
-        self,
-        path: str,
-        model_class: Optional[Type[nn.Module]] = None,
-        init_args: Optional[Dict[str, Any]] = None,
-        strict: bool = True,
-        map_location: Optional[str] = None
+            self,
+            path: str,
+            model_class: Optional[Type[nn.Module]] = None,
+            init_args: Optional[Dict[str, Any]] = None,
+            strict: bool = True,
+            map_location: Optional[str] = None
     ) -> None:
         """
         Load a PyTorch model from disk.
@@ -267,6 +265,8 @@ class TorchBBox(AbstractBBox):
         if isinstance(loaded, nn.Module):
             self.model = loaded.to(self.device)
             logger.info(f"TorchBBox loaded full nn.Module from {path}")
+            # for name, module in self.model.named_modules():
+            #     print(f"{name} -> {module}")
             return
 
         # --------------------------------------------------------------

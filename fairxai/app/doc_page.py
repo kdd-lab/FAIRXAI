@@ -1,6 +1,8 @@
-import streamlit as st
-from pathlib import Path
 import webbrowser
+from pathlib import Path
+
+import streamlit as st
+
 
 def show():
     st.title("Documentazione tecnica")

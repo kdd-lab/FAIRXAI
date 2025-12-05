@@ -3,8 +3,8 @@ import os
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type
-import numpy as np
 
+import numpy as np
 import yaml
 
 from fairxai.bbox.bbox_factory import ModelFactory
@@ -89,7 +89,6 @@ class Project:
             os.makedirs(os.path.join(self.workspace_path, "results"), exist_ok=True)
             os.makedirs(os.path.join(self.workspace_path, "pipelines"), exist_ok=True)
             os.makedirs(os.path.join(self.workspace_path, "logs"), exist_ok=True)
-
 
         # Store model & dataset parameters
         self.model_path: Optional[str] = model_path
@@ -210,9 +209,9 @@ class Project:
                 elif "instance_index" in params:
                     instance_index = params["instance_index"]
                     if hasattr(self.dataset_instance, "get_instance"):
-                        instance = self.dataset_instance.get_instance(instance_index )
+                        instance = self.dataset_instance.get_instance(instance_index)
                     else:
-                        instance = self.dataset_instance[instance_index ]
+                        instance = self.dataset_instance[instance_index]
 
                 else:
                     raise ValueError(
@@ -275,12 +274,12 @@ class Project:
     # Serialization / persistence
     # -------------------------------------------------------------------------
     def _create_explanation_record(
-        self,
-        explainer_cls: Type[GenericExplainerAdapter],
-        mode: str,
-        instance_index: Optional[int],
-        instance,
-        explanations_list: List[GenericExplanation],
+            self,
+            explainer_cls: Type[GenericExplainerAdapter],
+            mode: str,
+            instance_index: Optional[int],
+            instance,
+            explanations_list: List[GenericExplanation],
     ) -> Dict[str, Any]:
         """Build a dictionary record of a single explanation for storage/logging."""
         return {
