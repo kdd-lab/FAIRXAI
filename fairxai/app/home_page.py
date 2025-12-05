@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def show():
     st.title("FairXAI Platform")
     st.write("Benvenuto nella dashboard di FairXAI!")

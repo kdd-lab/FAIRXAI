@@ -6,11 +6,11 @@ Compatible with Windows, Linux, and macOS.
 """
 
 import os
-import sys
-import subprocess
-from pathlib import Path
-import tempfile
 import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
 
 # Configuration
 PROJECT_NAME = "FAIRXAI"

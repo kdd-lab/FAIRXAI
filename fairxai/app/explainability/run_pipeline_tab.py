@@ -1,6 +1,5 @@
-import os
-
 import streamlit as st
+
 
 def run_pipeline_page():
     st.subheader("Esegui la spiegazione del progetto caricato")
@@ -24,14 +23,14 @@ def run_pipeline_page():
     params = {}
     if mode == "local":
 
-        if project.dataset_type=='tabular':
+        if project.dataset_type == 'tabular':
             instance_index = st.number_input("Indice dell'istanza da spiegare", min_value=0, step=1)
             params["instance_index"] = int(instance_index)
 
-        elif project.dataset_type=='image':
+        elif project.dataset_type == 'image':
             dataset_files = [f for f in project.dataset_instance.filenames]
-            instance_filename= st.selectbox("Seleziona un file dataset:", dataset_files)
-            permutation_label = st.selectbox("Seleziona la permutazione:", ["HWC","CHW"])
+            instance_filename = st.selectbox("Seleziona un file dataset:", dataset_files)
+            permutation_label = st.selectbox("Seleziona la permutazione:", ["HWC", "CHW"])
             permutation = {"HWC": [0, 1, 2], "CHW": [1, 2, 0]}
             params["hwc_permutation"] = permutation[permutation_label]
             params["instance_filename"] = instance_filename

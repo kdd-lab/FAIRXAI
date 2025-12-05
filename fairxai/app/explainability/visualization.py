@@ -1,15 +1,13 @@
 import base64
-from io import BytesIO
 from collections import Counter
+from io import BytesIO
 
-import streamlit as st
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import plotly.express as px
-import matplotlib.pyplot as plt
+import streamlit as st
 from PIL import Image
-import numpy as np
-from PIL import Image
-import re
 
 
 def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: str = None):
@@ -76,10 +74,10 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
 
             if instance_str:
                 try:
-                    numbers  = np.array(instance_str, dtype=np.uint8)
-                    original_image_array = numbers.reshape((original_size[1],original_size[0],3))
+                    numbers = np.array(instance_str, dtype=np.uint8)
+                    original_image_array = numbers.reshape((original_size[1], original_size[0], 3))
                     original_image = Image.fromarray(original_image_array, 'RGB')
-                    #st.image(original_image, caption="Immagine Originale Ricostruita", use_column_width=True)
+                    # st.image(original_image, caption="Immagine Originale Ricostruita", use_column_width=True)
                 except Exception as e:
                     st.warning(f"⚠️ Errore nella ricostruzione dell'immagine originale: {e}")
 
@@ -121,7 +119,8 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
             all_features = [p.get("attr") for r in rules for p in r.get("premises", [])]
             if all_features:
                 freq = Counter(all_features)
-                df_freq = pd.DataFrame(freq.items(), columns=["Feature", "Occorrenze"]).sort_values("Occorrenze", ascending=True)
+                df_freq = pd.DataFrame(freq.items(), columns=["Feature", "Occorrenze"]).sort_values("Occorrenze",
+                                                                                                    ascending=True)
                 fig = px.bar(
                     df_freq,
                     x="Occorrenze",
@@ -142,7 +141,8 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
                     if premises:
                         st.dataframe(pd.DataFrame(premises))
                     if consequence:
-                        st.markdown(f"**→ Conseguenza:** `{consequence.get('attr')} {consequence.get('op')} {consequence.get('val')}`")
+                        st.markdown(
+                            f"**→ Conseguenza:** `{consequence.get('attr')} {consequence.get('op')} {consequence.get('val')}`")
 
         elif data_type == "image":
             st.info("Regole derivate da explainers basati su regioni o segmenti (non ancora visualizzati).")
@@ -166,7 +166,8 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
                     if premises:
                         st.dataframe(pd.DataFrame(premises))
                     if consequence:
-                        st.markdown(f"**→ Conseguenza:** `{consequence.get('attr')} {consequence.get('op')} {consequence.get('val')}`")
+                        st.markdown(
+                            f"**→ Conseguenza:** `{consequence.get('attr')} {consequence.get('op')} {consequence.get('val')}`")
 
         elif data_type == "image":
             st.subheader("📉 Controfatti per immagini")

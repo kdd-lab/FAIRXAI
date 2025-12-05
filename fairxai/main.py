@@ -2,11 +2,13 @@ import argparse
 import os
 import subprocess
 from importlib.metadata import version
+
 try:
     PACKAGE_VERSION = version("fairxai")
 except Exception:
     # Fallback/caso di sviluppo se il pacchetto non è ancora installato
     PACKAGE_VERSION = "0.0.0 (Not Installed)"
+
 
 def main():
     #########################################
@@ -32,7 +34,6 @@ def main():
 
     parser_app.set_defaults(func=app_fn)
 
-
     #########################################
     # Parse and execute
     #########################################
@@ -41,6 +42,7 @@ def main():
         parser.print_help()
         return
     args.func(parser, args)
+
 
 if __name__ == "__main__":
     main()

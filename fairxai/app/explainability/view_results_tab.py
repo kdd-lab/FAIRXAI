@@ -4,6 +4,8 @@ from pathlib import Path
 import streamlit as st
 
 from fairxai.app.explainability.visualization import visualize_explanation
+
+
 def results_page():
     st.title("Visualizza risultati")
 
@@ -31,6 +33,6 @@ def results_page():
         st.write(f"**Tipo dati:** {project.dataset_type}")
 
         for expl in data.get("result", []):
-            visualize_explanation(expl, data_type=project.dataset_type, instance_str = data['instance'])
+            visualize_explanation(expl, data_type=project.dataset_type, instance_str=data['instance'])
     else:
         st.markdown(f"Caricare un progetto tra quelli a disposizione")

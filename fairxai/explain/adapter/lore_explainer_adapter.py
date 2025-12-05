@@ -1,6 +1,5 @@
 from typing import Optional, Dict, Any, List
 
-import numpy as np
 import pandas as pd
 from lore_sa import TabularGeneticGeneratorLore, TabularRandomGeneratorLore, TabularRandGenGeneratorLore
 
@@ -50,7 +49,7 @@ class LoreExplainerAdapter(GenericExplainerAdapter):
         "TransformerClassifier",
     ]
 
-    def __init__(self, model: AbstractBBox, dataset:TabularDataset):
+    def __init__(self, model: AbstractBBox, dataset: TabularDataset):
         """
         Initialize the adapter without creating the LORE explainer yet.
 

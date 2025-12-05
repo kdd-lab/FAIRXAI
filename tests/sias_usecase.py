@@ -5,7 +5,6 @@
 import os
 from pprint import pprint
 
-from fairxai.project.project import Project
 from fairxai.project.project_registry import ProjectRegistry
 
 _CURRENT = os.path.abspath(os.path.dirname(__file__))
@@ -21,7 +20,7 @@ print(f"Project root: {PROJECT_ROOT}")
 print(f"Workspace base: {WORKSPACE_BASE}")
 
 DATA = os.path.join(WORKSPACE_BASE, "train")
-DATASET_TYPE = "image"                   # "tabular" | "image" | "text"
+DATASET_TYPE = "image"  # "tabular" | "image" | "text"
 MODEL_PARAMS = None
 MODEL_PATH = os.path.join(WORKSPACE_BASE, "pytorch_model_full.pt")
 TARGET_VARIABLE = None

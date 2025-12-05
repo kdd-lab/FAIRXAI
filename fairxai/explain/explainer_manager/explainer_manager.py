@@ -1,10 +1,9 @@
-import pkgutil
 import importlib
+import pkgutil
 from pathlib import Path
 from typing import List, Type
 
 import fairxai.explain.adapter as adapter
-
 from fairxai.explain.adapter.generic_explainer_adapter import GenericExplainerAdapter
 from fairxai.logger import logger
 
@@ -106,6 +105,7 @@ class ExplainerManager:
     @staticmethod
     def _get_all_explainer_classes() -> List[Type[GenericExplainerAdapter]]:
         """Return all subclasses (direct and indirect) of GenericExplainerAdapter."""
+
         def recurse(cls):
             subclasses = []
             for sub in cls.__subclasses__():

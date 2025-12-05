@@ -1,5 +1,6 @@
-from typing import List, Union, Optional, Tuple, Dict
 import os
+from typing import List, Union, Optional, Tuple, Dict
+
 import numpy as np
 from PIL import Image
 
@@ -38,9 +39,9 @@ class ImageDataset(Dataset):
     """
 
     def __init__(
-        self,
-        data: Union[str, np.ndarray, List[np.ndarray]],
-        class_name: Optional[str] = None
+            self,
+            data: Union[str, np.ndarray, List[np.ndarray]],
+            class_name: Optional[str] = None
     ) -> None:
 
         super().__init__(data=None, class_name=class_name)
@@ -203,10 +204,10 @@ class ImageDataset(Dataset):
     # ======================================================================
 
     def _load_from_folder(
-        self,
-        folder_path: str,
-        extensions: Optional[List[str]] = None,
-        recursive: bool = True
+            self,
+            folder_path: str,
+            extensions: Optional[List[str]] = None,
+            recursive: bool = True
     ) -> Tuple[List[np.ndarray], List[str]]:
         """
         Load all images inside a folder.
@@ -273,8 +274,8 @@ class ImageDataset(Dataset):
     # ======================================================================
 
     def update_descriptor(
-        self,
-        hwc_permutation: Optional[List[int]] = None
+            self,
+            hwc_permutation: Optional[List[int]] = None
     ) -> Dict:
         """
         Compute and attach the dataset descriptor.

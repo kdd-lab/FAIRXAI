@@ -1,6 +1,7 @@
 from typing import Dict, Any, Type, Optional
-from sklearn.base import BaseEstimator
+
 import torch.nn as nn
+from sklearn.base import BaseEstimator
 
 from fairxai.bbox import AbstractBBox
 from fairxai.bbox.sklearn_bbox import SklearnBBox

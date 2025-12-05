@@ -9,7 +9,6 @@ End-to-end runner that:
 """
 
 import os
-import json
 from pprint import pprint
 
 import pandas as pd
@@ -34,17 +33,17 @@ print(f"Project root: {PROJECT_ROOT}")
 print(f"Workspace base: {WORKSPACE_BASE}")
 
 DATA = os.path.join(WORKSPACE_BASE, "usecase_scam_class_train_clean.csv")
-DATASET_TYPE = "tabular"                   # "tabular" | "image" | "text"
+DATASET_TYPE = "tabular"  # "tabular" | "image" | "text"
 MODEL_PARAMS = None
 MODEL_PATH = os.path.join(WORKSPACE_BASE, "usecase_scam_model_class.pkl")
 TARGET_VARIABLE = "target"
 PIPELINE_YAML_LOCAL = os.path.join(WORKSPACE_BASE, "scam_example_pipeline.yaml")
-#target_name, type, sample_name, group
-CATEGORICAL_COLUMNS=["target_name", "type", "sample_name", "group"]
-#group_id,sample_id, target_id,type_id,timestamp
-ORDINAL_COLUMNS=["group_id", "sample_id", "target_id", "type_id", "timestamp"]
+# target_name, type, sample_name, group
+CATEGORICAL_COLUMNS = ["target_name", "type", "sample_name", "group"]
+# group_id,sample_id, target_id,type_id,timestamp
+ORDINAL_COLUMNS = ["group_id", "sample_id", "target_id", "type_id", "timestamp"]
 
-df_train=pd.read_csv(DATA)
+df_train = pd.read_csv(DATA)
 numeric_cols = [c for c in df_train.columns if c.replace('.', '', 1).isdigit()]
 clean_train_df = df_train[numeric_cols + [TARGET_VARIABLE]]
 

@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 import numpy as np
 from PIL import Image
+
 from fairxai.explain.explaination.generic_explanation import GenericExplanation
 
 
@@ -41,7 +42,9 @@ class ExampleExplanation(GenericExplanation):
         out: Dict[str, Any] = {}
         for k, v in example.items():
             try:
-                if isinstance(v, Image.Image) or (np is not None and isinstance(v, np.ndarray)) or isinstance(v, (bytes, bytearray)) or (isinstance(v, str) and Path(v).exists()):
+                if isinstance(v, Image.Image) or (np is not None and isinstance(v, np.ndarray)) or isinstance(v, (bytes,
+                                                                                                                  bytearray)) or (
+                        isinstance(v, str) and Path(v).exists()):
                     out[k] = self._serialize_image(v)
                 elif isinstance(v, dict) and v.get("type") == "base64" and "data" in v:
                     out[k] = v

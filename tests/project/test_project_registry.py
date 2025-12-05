@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 import pytest
@@ -9,11 +8,11 @@ from fairxai.project.project_registry import ProjectRegistry
 
 
 def create_fake_project(
-    base: Path,
-    project_id: str,
-    name: str = "test_project",
-    dataset_path: str = "/data/test.csv",
-    model_path: str = "/models/model.pkl",
+        base: Path,
+        project_id: str,
+        name: str = "test_project",
+        dataset_path: str = "/data/test.csv",
+        model_path: str = "/models/model.pkl",
 ):
     """
     Utility function to create a fake project folder with project.json.
