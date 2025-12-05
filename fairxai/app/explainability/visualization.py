@@ -69,45 +69,39 @@ def visualize_explanation(expl: dict, data_type: str = "tabular", instance_str: 
 
         elif data_type == "image":
             visualization = expl.get("visualization", {})
-            heatmap_b64 = visualization.get("heatmap_base64")
+            heatmap = visualization.get("heatmap")
             original_size = visualization.get("original_size", None)
 
             original_img = None
 
             if instance_str:
                 try:
-                    clean = re.sub(r'\.\.\.', '', instance_str)
-                    numbers = list(map(int, re.findall(r'\d+', clean)))
-                    arr = np.array(numbers, dtype=np.uint8)
-
-                    arr = arr.reshape((6, 6, 3))
-
-                    st.image(arr, caption="🖼️ Immagine originale ricostruita")
-
+                    numbers  = np.array(instance_str, dtype=np.uint8)
+                    original_image_array = numbers.reshape((original_size[1],original_size[0],3))
+                    original_image = Image.fromarray(original_image_array, 'RGB')
+                    #st.image(original_image, caption="Immagine Originale Ricostruita", use_column_width=True)
                 except Exception as e:
                     st.warning(f"⚠️ Errore nella ricostruzione dell'immagine originale: {e}")
 
-            # 🔹 Heatmap Grad-CAM
-            if heatmap_b64:
+            # Heatmap Grad-CAM
+            if heatmap:
                 try:
-                    heatmap_data = base64.b64decode(heatmap_b64)
-                    heatmap_img = Image.open(BytesIO(heatmap_data))
+                    numbers = np.array(instance_str, dtype=np.uint8)
+                    original_image_array = numbers.reshape((original_size[1], original_size[0], 3))
+                    original_image = Image.fromarray(original_image_array, 'RGB')
 
-                    # Ridimensiona la heatmap all'eventuale dimensione originale
-                    if original_size:
-                        heatmap_img = heatmap_img.resize(tuple(original_size), Image.LANCZOS)
-                    elif original_img:
-                        heatmap_img = heatmap_img.resize(original_img.size, Image.LANCZOS)
-
-                    # 🔹 Visualizza affiancate
+                    # Visualizza affiancate
                     col1, col2 = st.columns(2)
                     with col1:
-                        if original_img:
-                            st.image(original_img, caption="🖼️ Immagine originale", use_container_width=True)
+                        if original_image:
+                            st.image(original_image, caption="🖼️ Immagine originale", use_container_width=True)
                         else:
                             st.info("Immagine originale non disponibile.")
                     with col2:
-                        st.image(heatmap_img, caption="🔥 Heatmap (GradCAM)", use_container_width=True)
+                        heatmap_num = np.array(heatmap, dtype=np.float32)
+                        heatmap_image_array = heatmap_num.reshape((48, 42))
+                        heatmap_image = Image.fromarray(heatmap_image_array, mode='L')
+                        st.image(heatmap_image, caption="🔥 Heatmap (GradCAM)", use_container_width=True)
 
                 except Exception as e:
                     st.error(f"Errore nella decodifica o ridimensionamento della heatmap: {e}")

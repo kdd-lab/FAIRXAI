@@ -9,7 +9,7 @@ from fairxai.app.explainability.view_results_tab import results_page
 
 def show():
     st.title("Spiegabilità dei modelli")
-    project_tab, create_tab, run_pipeline_tab, run_result_tab = st.tabs(["Progetti", "Crea nuovo progetto", "Esegui spiegazione","Risultati"])
+    create_tab, project_tab, run_pipeline_tab, run_result_tab = st.tabs(["Crea nuovo progetto","Progetti", "Esegui spiegazione","Risultati"])
 
     with project_tab:
         projects_page()

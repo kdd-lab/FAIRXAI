@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type
+import numpy as np
 
 import yaml
 
@@ -97,7 +98,7 @@ class Project:
         self.target_variable: Optional[str] = target_variable
         self.categorical_columns: Optional[List[str]] = categorical_columns
         self.ordinal_columns: Optional[List[str]] = ordinal_columns
-        
+
         # -------------------------
         # Dataset initialization
         # -------------------------
@@ -296,7 +297,9 @@ class Project:
         """Serialize an instance for storage. Uses `to_dict()` if available."""
         if instance is None:
             return None
-        if hasattr(instance, "to_dict"):
+        if isinstance(instance, np.ndarray):
+            return np.char.mod('%s', instance).tolist()
+        elif hasattr(instance, "to_dict"):
             return instance.to_dict()
         return str(instance)
 

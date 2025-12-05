@@ -160,7 +160,7 @@ class GradCamExplainerAdapter(GenericExplainerAdapter):
         pixel_importances = {f"{i},{j}": float(heatmap_resized[i,j]/255.0) for i in range(h) for j in range(w)}
 
         visualization_payload = {
-            "heatmap": heatmap,
+            "heatmap": np.char.mod('%s', heatmap).tolist(),
             "target_class": target_class,
             "original_size": (orig_w, orig_h),
         }
