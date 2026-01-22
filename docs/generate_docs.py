@@ -71,51 +71,6 @@ def generate_apidoc():
         raise RuntimeError("Failed to run sphinx-apidoc.")
 
 
-# Step 2: Generate diagrams (optional)
-def generate_diagrams():
-    print("\n[2] Generating dependency and UML diagrams (optional)...")
-
-    pydeps_exec = find_executable("pydeps")
-    pyreverse_exec = find_executable("pyreverse")
-
-    diagrams_dir = SOURCE_DIR / "_static" / "diagrams"
-    diagrams_dir.mkdir(parents=True, exist_ok=True)
-
-    # ---- PYDEPS ----
-    if pydeps_exec:
-        print("  -> Generating dependency graph with pydeps...")
-        output_svg = diagrams_dir / "dependencies.svg"
-        cmd = [
-            "pydeps",
-            str(PROJECT_ROOT),
-            "--max-bacon", "3",
-            "--show-deps",
-            "--noshow",
-            f"--output={output_svg}",  # compatibile anche con Windows
-            "--format=svg"
-        ]
-        run_command(cmd)
-    else:
-        print("  pydeps not found — skipping dependency diagram")
-
-    # ---- PYREVERSE ----
-    if pyreverse_exec:
-        print("  -> Generating UML with pyreverse...")
-        with tempfile.TemporaryDirectory() as tmp:
-            run_command([
-                "pyreverse",
-                "-f", "ALL",
-                "-A", "-S",
-                "-o", "dot",
-                "-p", PROJECT_NAME,
-                str(PROJECT_ROOT)
-            ])
-            for dot in Path(".").glob("classes_*.dot"):
-                shutil.move(dot, diagrams_dir / dot.name)
-    else:
-        print("  pyreverse not found — skipping UML diagram")
-
-
 # Step 3: Create single-page API reference
 def generate_api_reference():
     print("\n[3] Creating API reference page...")
@@ -260,7 +215,6 @@ def main():
     print(f"Starting documentation build for {PROJECT_NAME}...\n")
 
     generate_apidoc()
-    # generate_diagrams()
     generate_api_reference()
     ensure_additional_docs()
     update_index_rst()
