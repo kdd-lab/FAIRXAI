@@ -189,6 +189,7 @@ Welcome to {PROJECT_NAME}'s documentation
 
    usage
    workflow
+   new_explainer_guide
    api_reference
    modules
    indices
@@ -202,8 +203,7 @@ Indices and tables
     """.strip()
 
     INDEX_FILE.write_text(index_content, encoding="utf-8")
-    print(f"Updated: {INDEX_FILE}")
-
+    print(f"Updated index file at: {INDEX_FILE}")
 
 def build_html_docs():
     """
@@ -247,7 +247,7 @@ def build_html_docs():
         # Ensure output directory exists
         build_html_dir.mkdir(parents=True, exist_ok=True)
         # Use sphinx-build module (works in venv)
-        cmd = [sys.executable, "-m", "sphinx", "-b", "html", str(source_dir), str(build_html_dir)]
+        cmd = [sys.executable, "-m", "sphinx", "-E", "-b","html", str(source_dir), str(build_html_dir)]
         run_command(cmd, cwd=docs_root)
         print(f"HTML built at: {build_html_dir}")
     except Exception as e:
