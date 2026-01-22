@@ -202,7 +202,7 @@ def build_html_docs():
         # Ensure output directory exists
         build_html_dir.mkdir(parents=True, exist_ok=True)
         # Use sphinx-build module (works in venv)
-        cmd = [sys.executable, "-m", "sphinx", "-E", "-b","html", str(source_dir), str(build_html_dir)]
+        cmd = [sys.executable, "-m", "sphinx", "-E", "-b","html", str(source_dir), str(DOCS_ROOT)]
         run_command(cmd, cwd=docs_root)
         print(f"HTML built at: {build_html_dir}")
     except Exception as e:
