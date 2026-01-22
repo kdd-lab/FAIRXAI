@@ -1,0 +1,692 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fairxai.explain.explaination package &mdash; FairXAI  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fairxai.explain.explainer_manager package" href="fairxai.explain.explainer_manager.html" />
+    <link rel="prev" title="fairxai.explain.adapter package" href="fairxai.explain.adapter.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FairXAI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="new_explainer_guide.html">Guide to integrating an explanation method in FAIRXAI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#architecture-overview">1. Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#implementing-the-adapter">2. Implementing the Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#step-a-inheritance-and-metadata">Step A: Inheritance and Metadata</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="new_explainer_guide.html#explainer_name"><code class="docutils literal notranslate"><span class="pre">explainer_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="new_explainer_guide.html#supported_datasets"><code class="docutils literal notranslate"><span class="pre">supported_datasets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="new_explainer_guide.html#supported_models"><code class="docutils literal notranslate"><span class="pre">supported_models</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#step-b-required-methods">Step B: Required Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#code-example">Code Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#handling-results-explanation">3. Handling Results (Explanation)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#available-subclasses">Available subclasses</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#registration-and-verification">4. Registration and Verification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#usage-via-configuration">5. Usage via Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#developer-checklist">Developer Checklist</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">FAIRXAI API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fairxai.html">fairxai package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fairxai.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.html">fairxai.app package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html">fairxai.bbox package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.html">fairxai.data package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="fairxai.explain.html">fairxai.explain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html">fairxai.project package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.logger">fairxai.logger module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.main">fairxai.main module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.html#fairxai.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.app.html">fairxai.app package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.html#module-fairxai.app.app">fairxai.app.app module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.html#fairxai.app.app.app_main"><code class="docutils literal notranslate"><span class="pre">app_main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.html#module-fairxai.app">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.app.explainability.html">fairxai.app.explainability package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.create_project_tab">fairxai.app.explainability.create_project_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.create_project_tab.create_project_page"><code class="docutils literal notranslate"><span class="pre">create_project_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.explainability_page">fairxai.app.explainability.explainability_page module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.explainability_page.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.project_tab">fairxai.app.explainability.project_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.project_tab.projects_page"><code class="docutils literal notranslate"><span class="pre">projects_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.run_pipeline_tab">fairxai.app.explainability.run_pipeline_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.run_pipeline_tab.run_pipeline_page"><code class="docutils literal notranslate"><span class="pre">run_pipeline_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.view_results_tab">fairxai.app.explainability.view_results_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.view_results_tab.results_page"><code class="docutils literal notranslate"><span class="pre">results_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.visualization">fairxai.app.explainability.visualization module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.visualization.visualize_explanation"><code class="docutils literal notranslate"><span class="pre">visualize_explanation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.bbox.html">fairxai.bbox package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#module-fairxai.bbox.bbox">fairxai.bbox.bbox module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html#fairxai.bbox.bbox.AbstractBBox"><code class="docutils literal notranslate"><span class="pre">AbstractBBox</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#module-fairxai.bbox.bbox_factory">fairxai.bbox.bbox_factory module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html#fairxai.bbox.bbox_factory.ModelFactory"><code class="docutils literal notranslate"><span class="pre">ModelFactory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#module-fairxai.bbox">Module contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html#fairxai.bbox.AbstractBBox"><code class="docutils literal notranslate"><span class="pre">AbstractBBox</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.data.html">fairxai.data package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html">fairxai.data.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html">fairxai.data.descriptor package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.html#module-fairxai.data">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.data.dataset.html">fairxai.data.dataset package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.dataset">fairxai.data.dataset.dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.dataset.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.dataset_factory">fairxai.data.dataset.dataset_factory module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.dataset_factory.DatasetFactory"><code class="docutils literal notranslate"><span class="pre">DatasetFactory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.image_dataset">fairxai.data.dataset.image_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.image_dataset.ImageDataset"><code class="docutils literal notranslate"><span class="pre">ImageDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.tabular_dataset">fairxai.data.dataset.tabular_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.tabular_dataset.TabularDataset"><code class="docutils literal notranslate"><span class="pre">TabularDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.text_dataset">fairxai.data.dataset.text_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.text_dataset.TextDataset"><code class="docutils literal notranslate"><span class="pre">TextDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.timeserie_dataset">fairxai.data.dataset.timeserie_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.timeserie_dataset.TimeSeriesDataset"><code class="docutils literal notranslate"><span class="pre">TimeSeriesDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset">Module contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.TabularDataset"><code class="docutils literal notranslate"><span class="pre">TabularDataset</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.data.descriptor.html">fairxai.data.descriptor package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.base_descriptor">fairxai.data.descriptor.base_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.base_descriptor.BaseDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">BaseDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.image_descriptor">fairxai.data.descriptor.image_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.image_descriptor.ImageDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">ImageDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.tabular_descriptor">fairxai.data.descriptor.tabular_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.tabular_descriptor.TabularDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">TabularDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.text_descriptor">fairxai.data.descriptor.text_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.text_descriptor.TextDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">TextDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.timeserie_descriptor">fairxai.data.descriptor.timeserie_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.timeserie_descriptor.TimeSeriesDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">TimeSeriesDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="fairxai.explain.html">fairxai.explain package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fairxai.explain.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.adapter.html">fairxai.explain.adapter package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fairxai.explain.explaination package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html">fairxai.explain.explainer_manager package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.html#module-fairxai.explain">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.explain.adapter.html">fairxai.explain.adapter package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.adapter.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.adapter.html#module-fairxai.explain.adapter.generic_explainer_adapter">fairxai.explain.adapter.generic_explainer_adapter module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.adapter.html#fairxai.explain.adapter.generic_explainer_adapter.GenericExplainerAdapter"><code class="docutils literal notranslate"><span class="pre">GenericExplainerAdapter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.adapter.html#module-fairxai.explain.adapter">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fairxai.explain.explaination package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination.counter_example_explanation">fairxai.explain.explaination.counter_example_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation"><code class="docutils literal notranslate"><span class="pre">CounterExampleExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination.counterfactual_rule_explanation">fairxai.explain.explaination.counterfactual_rule_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation"><code class="docutils literal notranslate"><span class="pre">CounterfactualRuleExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination.example_explanation">fairxai.explain.explaination.example_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.explain.explaination.example_explanation.ExampleExplanation"><code class="docutils literal notranslate"><span class="pre">ExampleExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination.feature_importance_explanation">fairxai.explain.explaination.feature_importance_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation"><code class="docutils literal notranslate"><span class="pre">FeatureImportanceExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination.generic_explanation">fairxai.explain.explaination.generic_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination.rule_based_explanation">fairxai.explain.explaination.rule_based_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation"><code class="docutils literal notranslate"><span class="pre">RuleBasedExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.explain.explaination">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.explain.explainer_manager.html">fairxai.explain.explainer_manager package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager.basic_io_handler">fairxai.explain.explainer_manager.basic_io_handler module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.basic_io_handler.BaseIoHandler"><code class="docutils literal notranslate"><span class="pre">BaseIoHandler</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager.explainer_manager">fairxai.explain.explainer_manager.explainer_manager module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.explainer_manager.ExplainerManager"><code class="docutils literal notranslate"><span class="pre">ExplainerManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.explainer_manager.import_all_adapters"><code class="docutils literal notranslate"><span class="pre">import_all_adapters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager.guided_explanation_wizard">fairxai.explain.explainer_manager.guided_explanation_wizard module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.guided_explanation_wizard.GuidedExplanationWizard"><code class="docutils literal notranslate"><span class="pre">GuidedExplanationWizard</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.project.html">fairxai.project package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#module-fairxai.project.project">fairxai.project.project module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html#fairxai.project.project.Project"><code class="docutils literal notranslate"><span class="pre">Project</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#module-fairxai.project.project_registry">fairxai.project.project_registry module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html#fairxai.project.project_registry.ProjectRegistry"><code class="docutils literal notranslate"><span class="pre">ProjectRegistry</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#module-fairxai.project">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">fairxai</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fairxai.html">fairxai package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fairxai.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.html">fairxai.app package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html">fairxai.bbox package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.html">fairxai.data package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="fairxai.explain.html">fairxai.explain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html">fairxai.project package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.logger">fairxai.logger module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.main">fairxai.main module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.html#fairxai.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FairXAI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">FAIRXAI API Reference</a></li>
+          <li class="breadcrumb-item"><a href="fairxai.html">fairxai package</a></li>
+          <li class="breadcrumb-item"><a href="fairxai.explain.html">fairxai.explain package</a></li>
+      <li class="breadcrumb-item active">fairxai.explain.explaination package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fairxai.explain.explaination.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fairxai-explain-explaination-package">
+<h1>fairxai.explain.explaination package<a class="headerlink" href="#fairxai-explain-explaination-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-fairxai.explain.explaination.counter_example_explanation">
+<span id="fairxai-explain-explaination-counter-example-explanation-module"></span><h2>fairxai.explain.explaination.counter_example_explanation module<a class="headerlink" href="#module-fairxai.explain.explaination.counter_example_explanation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fairxai.explain.explaination.counter_example_explanation.</span></span><span class="sig-name descname"><span class="pre">CounterExampleExplanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counter_examples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/counter_example_explanation.html#CounterExampleExplanation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation" title="fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></p>
+<p>Counter-Example Explanation that supports tabular fields and images.</p>
+<dl class="simple">
+<dt>Each example is a dict. If a value is:</dt><dd><ul class="simple">
+<li><p>PIL.Image.Image -&gt; encoded as base64 PNG</p></li>
+<li><p>numpy.ndarray -&gt; converted to PIL.Image then encoded (if numpy available)</p></li>
+<li><p>bytes -&gt; assumed image bytes and base64-encoded</p></li>
+<li><p>str path -&gt; file read and base64-encoded (if file exists)</p></li>
+<li><p>other primitive -&gt; left as-is</p></li>
+</ul>
+</dd>
+</dl>
+<p>to_dict() returns a JSON-ready wrapper with the serialized examples.
+visualize() returns the same structure (no printing).</p>
+<p>Initialize a generic explanation object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> (<em>str</em>) – Name of the explainer (e.g., SHAP, LIME).</p></li>
+<li><p><strong>explanation_type</strong> (<em>str</em>) – One of local/global.</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Explanation payload (already structured and serializable).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.GLOBAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">GLOBAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'global'</span></em><a class="headerlink" href="#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.GLOBAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.LOCAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">LOCAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'local'</span></em><a class="headerlink" href="#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.LOCAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/counter_example_explanation.html#CounterExampleExplanation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Build the JSON-ready representation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/counter_example_explanation.html#CounterExampleExplanation.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation.visualize" title="Link to this definition"></a></dt>
+<dd><p>Return the same dict that to_dict() produces (no printing).</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fairxai.explain.explaination.counterfactual_rule_explanation">
+<span id="fairxai-explain-explaination-counterfactual-rule-explanation-module"></span><h2>fairxai.explain.explaination.counterfactual_rule_explanation module<a class="headerlink" href="#module-fairxai.explain.explaination.counterfactual_rule_explanation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fairxai.explain.explaination.counterfactual_rule_explanation.</span></span><span class="sig-name descname"><span class="pre">CounterfactualRuleExplanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counterfactual_rules</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explanation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/counterfactual_rule_explanation.html#CounterfactualRuleExplanation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation" title="fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></p>
+<p>Counterfactual Rule Explanation.
+Shows minimal feature changes required to flip the prediction.</p>
+<p>Initialize a generic explanation object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> (<em>str</em>) – Name of the explainer (e.g., SHAP, LIME).</p></li>
+<li><p><strong>explanation_type</strong> (<em>str</em>) – One of local/global.</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Explanation payload (already structured and serializable).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.GLOBAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">GLOBAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'global'</span></em><a class="headerlink" href="#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.GLOBAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.LOCAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">LOCAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'local'</span></em><a class="headerlink" href="#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.LOCAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/counterfactual_rule_explanation.html#CounterfactualRuleExplanation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Serializable representation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/counterfactual_rule_explanation.html#CounterfactualRuleExplanation.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation.visualize" title="Link to this definition"></a></dt>
+<dd><p>Return a structure ready for Streamlit.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fairxai.explain.explaination.example_explanation">
+<span id="fairxai-explain-explaination-example-explanation-module"></span><h2>fairxai.explain.explaination.example_explanation module<a class="headerlink" href="#module-fairxai.explain.explaination.example_explanation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.example_explanation.ExampleExplanation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fairxai.explain.explaination.example_explanation.</span></span><span class="sig-name descname"><span class="pre">ExampleExplanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">examples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/example_explanation.html#ExampleExplanation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.example_explanation.ExampleExplanation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation" title="fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></p>
+<p>Handles example-based explanations for both tabular and image inputs.</p>
+<p>Initialize a generic explanation object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> (<em>str</em>) – Name of the explainer (e.g., SHAP, LIME).</p></li>
+<li><p><strong>explanation_type</strong> (<em>str</em>) – One of local/global.</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Explanation payload (already structured and serializable).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.example_explanation.ExampleExplanation.GLOBAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">GLOBAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'global'</span></em><a class="headerlink" href="#fairxai.explain.explaination.example_explanation.ExampleExplanation.GLOBAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.example_explanation.ExampleExplanation.LOCAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">LOCAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'local'</span></em><a class="headerlink" href="#fairxai.explain.explaination.example_explanation.ExampleExplanation.LOCAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.example_explanation.ExampleExplanation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/example_explanation.html#ExampleExplanation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.example_explanation.ExampleExplanation.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Return a fully serializable representation of the explanation.</p>
+<p>Every explanation—rule-based, counterfactual, feature-importance, etc.—
+will produce a JSON-ready dictionary with a consistent schema.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.example_explanation.ExampleExplanation.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/example_explanation.html#ExampleExplanation.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.example_explanation.ExampleExplanation.visualize" title="Link to this definition"></a></dt>
+<dd><p>Subclasses must override this and return a Streamlit-friendly structure.</p>
+<p>visualize() MUST:
+- NOT print anything
+- NOT generate plots directly
+- return a dict/list/string that Streamlit can render</p>
+<p>This ensures the visualization responsibility stays with the frontend,
+not the explanation object.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fairxai.explain.explaination.feature_importance_explanation">
+<span id="fairxai-explain-explaination-feature-importance-explanation-module"></span><h2>fairxai.explain.explaination.feature_importance_explanation module<a class="headerlink" href="#module-fairxai.explain.explaination.feature_importance_explanation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fairxai.explain.explaination.feature_importance_explanation.</span></span><span class="sig-name descname"><span class="pre">FeatureImportanceExplanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visualization</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/feature_importance_explanation.html#FeatureImportanceExplanation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation" title="fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></p>
+<p>Serializable feature importance explanation with optional visualization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> – name of the explainer that produced this explanation</p></li>
+<li><p><strong>data</strong> – mapping from feature identifier to numeric importance (e.g. “i,j” -&gt; float)</p></li>
+<li><p><strong>visualization</strong> – optional dict containing visual assets (base64 PNGs, shape, metadata)</p></li>
+<li><p><strong>global_scope</strong> – whether the explanation is global</p></li>
+</ul>
+</dd>
+</dl>
+<p>Initialize a generic explanation object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> (<em>str</em>) – Name of the explainer (e.g., SHAP, LIME).</p></li>
+<li><p><strong>explanation_type</strong> (<em>str</em>) – One of local/global.</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Explanation payload (already structured and serializable).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.GLOBAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">GLOBAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'global'</span></em><a class="headerlink" href="#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.GLOBAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.LOCAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">LOCAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'local'</span></em><a class="headerlink" href="#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.LOCAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/feature_importance_explanation.html#FeatureImportanceExplanation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Return a JSON-serializable structure including optional visualization.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/feature_importance_explanation.html#FeatureImportanceExplanation.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation.visualize" title="Link to this definition"></a></dt>
+<dd><p>Return data for UI libraries (e.g. Streamlit). This includes visualization if present.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fairxai.explain.explaination.generic_explanation">
+<span id="fairxai-explain-explaination-generic-explanation-module"></span><h2>fairxai.explain.explaination.generic_explanation module<a class="headerlink" href="#module-fairxai.explain.explaination.generic_explanation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.generic_explanation.GenericExplanation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fairxai.explain.explaination.generic_explanation.</span></span><span class="sig-name descname"><span class="pre">GenericExplanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explanation_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/generic_explanation.html#GenericExplanation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for all explanations in the framework.</p>
+<p>It provides a consistent structure for:
+- storing explanation metadata,
+- storing explanation payloads,
+- returning serializable dictionaries,
+- providing Streamlit-friendly visualization output.</p>
+<p>Subclasses must override <cite>visualize()</cite> to return a structure that can be
+rendered by Streamlit (NOT printed) and may optionally extend <cite>to_dict()</cite>.</p>
+<p>Initialize a generic explanation object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> (<em>str</em>) – Name of the explainer (e.g., SHAP, LIME).</p></li>
+<li><p><strong>explanation_type</strong> (<em>str</em>) – One of local/global.</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Explanation payload (already structured and serializable).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.generic_explanation.GenericExplanation.GLOBAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">GLOBAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'global'</span></em><a class="headerlink" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation.GLOBAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.generic_explanation.GenericExplanation.LOCAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">LOCAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'local'</span></em><a class="headerlink" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation.LOCAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.generic_explanation.GenericExplanation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/generic_explanation.html#GenericExplanation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Return a fully serializable representation of the explanation.</p>
+<p>Every explanation—rule-based, counterfactual, feature-importance, etc.—
+will produce a JSON-ready dictionary with a consistent schema.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.generic_explanation.GenericExplanation.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/generic_explanation.html#GenericExplanation.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation.visualize" title="Link to this definition"></a></dt>
+<dd><p>Subclasses must override this and return a Streamlit-friendly structure.</p>
+<p>visualize() MUST:
+- NOT print anything
+- NOT generate plots directly
+- return a dict/list/string that Streamlit can render</p>
+<p>This ensures the visualization responsibility stays with the frontend,
+not the explanation object.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fairxai.explain.explaination.rule_based_explanation">
+<span id="fairxai-explain-explaination-rule-based-explanation-module"></span><h2>fairxai.explain.explaination.rule_based_explanation module<a class="headerlink" href="#module-fairxai.explain.explaination.rule_based_explanation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fairxai.explain.explaination.rule_based_explanation.</span></span><span class="sig-name descname"><span class="pre">RuleBasedExplanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rules</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explanation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/rule_based_explanation.html#RuleBasedExplanation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fairxai.explain.explaination.generic_explanation.GenericExplanation" title="fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></p>
+<p>Rule-Based Explanation.</p>
+<p>Handles symbolic “if–then” rules. Rules should be passed in structured form,
+and the explanation can be serialized and consumed by Streamlit.</p>
+<p>Example data:
+[</p>
+<blockquote>
+<div><p>“IF income &gt; 50000 AND age &lt; 40 THEN class = ‘high spender’”,
+“IF education = ‘PhD’ THEN class = ‘premium customer’”</p>
+</div></blockquote>
+<p>]</p>
+<p>Initialize a generic explanation object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>explainer_name</strong> (<em>str</em>) – Name of the explainer (e.g., SHAP, LIME).</p></li>
+<li><p><strong>explanation_type</strong> (<em>str</em>) – One of local/global.</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – Explanation payload (already structured and serializable).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.GLOBAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">GLOBAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'global'</span></em><a class="headerlink" href="#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.GLOBAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.LOCAL_EXPLANATION">
+<span class="sig-name descname"><span class="pre">LOCAL_EXPLANATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'local'</span></em><a class="headerlink" href="#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.LOCAL_EXPLANATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/fairxai/explain/explaination/rule_based_explanation.html#RuleBasedExplanation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Return fully serializable representation (for JSON or Streamlit).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/explain/explaination/rule_based_explanation.html#RuleBasedExplanation.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation.visualize" title="Link to this definition"></a></dt>
+<dd><p>Return the formatted rules rather than printing them.
+Suitable for Streamlit.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fairxai.explain.explaination">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fairxai.explain.explaination" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fairxai.explain.adapter.html" class="btn btn-neutral float-left" title="fairxai.explain.adapter package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fairxai.explain.explainer_manager.html" class="btn btn-neutral float-right" title="fairxai.explain.explainer_manager package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kode.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
