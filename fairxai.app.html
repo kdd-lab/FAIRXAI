@@ -1,0 +1,389 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fairxai.app package &mdash; FairXAI  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fairxai.bbox package" href="fairxai.bbox.html" />
+    <link rel="prev" title="fairxai package" href="fairxai.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FairXAI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="new_explainer_guide.html">Guide to integrating an explanation method in FAIRXAI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#architecture-overview">1. Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#implementing-the-adapter">2. Implementing the Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#step-a-inheritance-and-metadata">Step A: Inheritance and Metadata</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="new_explainer_guide.html#explainer_name"><code class="docutils literal notranslate"><span class="pre">explainer_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="new_explainer_guide.html#supported_datasets"><code class="docutils literal notranslate"><span class="pre">supported_datasets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="new_explainer_guide.html#supported_models"><code class="docutils literal notranslate"><span class="pre">supported_models</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#step-b-required-methods">Step B: Required Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#code-example">Code Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#handling-results-explanation">3. Handling Results (Explanation)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="new_explainer_guide.html#available-subclasses">Available subclasses</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#registration-and-verification">4. Registration and Verification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#usage-via-configuration">5. Usage via Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_explainer_guide.html#developer-checklist">Developer Checklist</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="api_reference.html">FAIRXAI API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fairxai.html">fairxai package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fairxai.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fairxai.app package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html">fairxai.bbox package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.html">fairxai.data package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.html">fairxai.explain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html">fairxai.project package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.logger">fairxai.logger module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.main">fairxai.main module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.html#fairxai.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fairxai.app package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.app.app">fairxai.app.app module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fairxai.app.app.app_main"><code class="docutils literal notranslate"><span class="pre">app_main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-fairxai.app">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.app.explainability.html">fairxai.app.explainability package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.create_project_tab">fairxai.app.explainability.create_project_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.create_project_tab.create_project_page"><code class="docutils literal notranslate"><span class="pre">create_project_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.explainability_page">fairxai.app.explainability.explainability_page module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.explainability_page.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.project_tab">fairxai.app.explainability.project_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.project_tab.projects_page"><code class="docutils literal notranslate"><span class="pre">projects_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.run_pipeline_tab">fairxai.app.explainability.run_pipeline_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.run_pipeline_tab.run_pipeline_page"><code class="docutils literal notranslate"><span class="pre">run_pipeline_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.view_results_tab">fairxai.app.explainability.view_results_tab module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.view_results_tab.results_page"><code class="docutils literal notranslate"><span class="pre">results_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability.visualization">fairxai.app.explainability.visualization module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.app.explainability.html#fairxai.app.explainability.visualization.visualize_explanation"><code class="docutils literal notranslate"><span class="pre">visualize_explanation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.app.explainability.html#module-fairxai.app.explainability">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.bbox.html">fairxai.bbox package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#module-fairxai.bbox.bbox">fairxai.bbox.bbox module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html#fairxai.bbox.bbox.AbstractBBox"><code class="docutils literal notranslate"><span class="pre">AbstractBBox</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#module-fairxai.bbox.bbox_factory">fairxai.bbox.bbox_factory module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html#fairxai.bbox.bbox_factory.ModelFactory"><code class="docutils literal notranslate"><span class="pre">ModelFactory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.bbox.html#module-fairxai.bbox">Module contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html#fairxai.bbox.AbstractBBox"><code class="docutils literal notranslate"><span class="pre">AbstractBBox</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.data.html">fairxai.data package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html">fairxai.data.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html">fairxai.data.descriptor package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.html#module-fairxai.data">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.data.dataset.html">fairxai.data.dataset package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.dataset">fairxai.data.dataset.dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.dataset.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.dataset_factory">fairxai.data.dataset.dataset_factory module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.dataset_factory.DatasetFactory"><code class="docutils literal notranslate"><span class="pre">DatasetFactory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.image_dataset">fairxai.data.dataset.image_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.image_dataset.ImageDataset"><code class="docutils literal notranslate"><span class="pre">ImageDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.tabular_dataset">fairxai.data.dataset.tabular_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.tabular_dataset.TabularDataset"><code class="docutils literal notranslate"><span class="pre">TabularDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.text_dataset">fairxai.data.dataset.text_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.text_dataset.TextDataset"><code class="docutils literal notranslate"><span class="pre">TextDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset.timeserie_dataset">fairxai.data.dataset.timeserie_dataset module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.timeserie_dataset.TimeSeriesDataset"><code class="docutils literal notranslate"><span class="pre">TimeSeriesDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.dataset.html#module-fairxai.data.dataset">Module contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.dataset.html#fairxai.data.dataset.TabularDataset"><code class="docutils literal notranslate"><span class="pre">TabularDataset</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.data.descriptor.html">fairxai.data.descriptor package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.base_descriptor">fairxai.data.descriptor.base_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.base_descriptor.BaseDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">BaseDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.image_descriptor">fairxai.data.descriptor.image_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.image_descriptor.ImageDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">ImageDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.tabular_descriptor">fairxai.data.descriptor.tabular_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.tabular_descriptor.TabularDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">TabularDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.text_descriptor">fairxai.data.descriptor.text_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.text_descriptor.TextDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">TextDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor.timeserie_descriptor">fairxai.data.descriptor.timeserie_descriptor module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.descriptor.html#fairxai.data.descriptor.timeserie_descriptor.TimeSeriesDatasetDescriptor"><code class="docutils literal notranslate"><span class="pre">TimeSeriesDatasetDescriptor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.data.descriptor.html#module-fairxai.data.descriptor">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.explain.html">fairxai.explain package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.adapter.html">fairxai.explain.adapter package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html">fairxai.explain.explaination package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html">fairxai.explain.explainer_manager package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.html#module-fairxai.explain">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.explain.adapter.html">fairxai.explain.adapter package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.adapter.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.adapter.html#module-fairxai.explain.adapter.generic_explainer_adapter">fairxai.explain.adapter.generic_explainer_adapter module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.adapter.html#fairxai.explain.adapter.generic_explainer_adapter.GenericExplainerAdapter"><code class="docutils literal notranslate"><span class="pre">GenericExplainerAdapter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.adapter.html#module-fairxai.explain.adapter">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.explain.explaination.html">fairxai.explain.explaination package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination.counter_example_explanation">fairxai.explain.explaination.counter_example_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html#fairxai.explain.explaination.counter_example_explanation.CounterExampleExplanation"><code class="docutils literal notranslate"><span class="pre">CounterExampleExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination.counterfactual_rule_explanation">fairxai.explain.explaination.counterfactual_rule_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html#fairxai.explain.explaination.counterfactual_rule_explanation.CounterfactualRuleExplanation"><code class="docutils literal notranslate"><span class="pre">CounterfactualRuleExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination.example_explanation">fairxai.explain.explaination.example_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html#fairxai.explain.explaination.example_explanation.ExampleExplanation"><code class="docutils literal notranslate"><span class="pre">ExampleExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination.feature_importance_explanation">fairxai.explain.explaination.feature_importance_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html#fairxai.explain.explaination.feature_importance_explanation.FeatureImportanceExplanation"><code class="docutils literal notranslate"><span class="pre">FeatureImportanceExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination.generic_explanation">fairxai.explain.explaination.generic_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html#fairxai.explain.explaination.generic_explanation.GenericExplanation"><code class="docutils literal notranslate"><span class="pre">GenericExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination.rule_based_explanation">fairxai.explain.explaination.rule_based_explanation module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explaination.html#fairxai.explain.explaination.rule_based_explanation.RuleBasedExplanation"><code class="docutils literal notranslate"><span class="pre">RuleBasedExplanation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explaination.html#module-fairxai.explain.explaination">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.explain.explainer_manager.html">fairxai.explain.explainer_manager package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager.basic_io_handler">fairxai.explain.explainer_manager.basic_io_handler module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.basic_io_handler.BaseIoHandler"><code class="docutils literal notranslate"><span class="pre">BaseIoHandler</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager.explainer_manager">fairxai.explain.explainer_manager.explainer_manager module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.explainer_manager.ExplainerManager"><code class="docutils literal notranslate"><span class="pre">ExplainerManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.explainer_manager.import_all_adapters"><code class="docutils literal notranslate"><span class="pre">import_all_adapters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager.guided_explanation_wizard">fairxai.explain.explainer_manager.guided_explanation_wizard module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.explainer_manager.html#fairxai.explain.explainer_manager.guided_explanation_wizard.GuidedExplanationWizard"><code class="docutils literal notranslate"><span class="pre">GuidedExplanationWizard</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.explain.explainer_manager.html#module-fairxai.explain.explainer_manager">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fairxai.project.html">fairxai.project package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#module-fairxai.project.project">fairxai.project.project module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html#fairxai.project.project.Project"><code class="docutils literal notranslate"><span class="pre">Project</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#module-fairxai.project.project_registry">fairxai.project.project_registry module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html#fairxai.project.project_registry.ProjectRegistry"><code class="docutils literal notranslate"><span class="pre">ProjectRegistry</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.project.html#module-fairxai.project">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">fairxai</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fairxai.html">fairxai package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fairxai.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fairxai.app package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.bbox.html">fairxai.bbox package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.data.html">fairxai.data package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.explain.html">fairxai.explain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.project.html">fairxai.project package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.logger">fairxai.logger module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai.main">fairxai.main module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fairxai.html#fairxai.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fairxai.html#module-fairxai">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FairXAI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api_reference.html">FAIRXAI API Reference</a></li>
+          <li class="breadcrumb-item"><a href="fairxai.html">fairxai package</a></li>
+      <li class="breadcrumb-item active">fairxai.app package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fairxai.app.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fairxai-app-package">
+<h1>fairxai.app package<a class="headerlink" href="#fairxai-app-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-fairxai.app.app">
+<span id="fairxai-app-app-module"></span><h2>fairxai.app.app module<a class="headerlink" href="#module-fairxai.app.app" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="fairxai.app.app.app_main">
+<span class="sig-prename descclassname"><span class="pre">fairxai.app.app.</span></span><span class="sig-name descname"><span class="pre">app_main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fairxai/app/app.html#app_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fairxai.app.app.app_main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-fairxai.app">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fairxai.app" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fairxai.html" class="btn btn-neutral float-left" title="fairxai package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fairxai.bbox.html" class="btn btn-neutral float-right" title="fairxai.bbox package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kode.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
