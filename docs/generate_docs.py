@@ -90,36 +90,6 @@ def generate_api_reference():
     print(f"Created: {API_REF_FILE}")
 
 
-# Step 3: Update index.rst
-def update_index_rst():
-    print("\n[3] Updating index.rst ...")
-
-    index_content = f"""
-.. {PROJECT_NAME} documentation master file
-
-Welcome to {PROJECT_NAME}'s documentation
-=========================================
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents
-
-   new_explainer_guide
-   api_reference
-   modules
-   indices
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-    """.strip()
-
-    INDEX_FILE.write_text(index_content, encoding="utf-8")
-    print(f"Updated index file at: {INDEX_FILE}")
-
 def build_html_docs():
     """Build Sphinx HTML documentation."""
     print("\n[4] Building HTML docs...")
@@ -143,6 +113,8 @@ def deploy_to_gh_pages(html_dir):
     repo_url = result.stdout.strip()
     if not repo_url:
         raise RuntimeError("Could not determine remote repository URL.")
+
+    current_dir = Path.cwd()
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
@@ -181,6 +153,7 @@ def deploy_to_gh_pages(html_dir):
         run_command(["git", "push", "origin", "gh-pages"])
         print("✅ Documentation successfully deployed to gh-pages!")
 
+    os.chdir(current_dir)
 
 # Main
 def main():
@@ -188,7 +161,6 @@ def main():
 
     generate_apidoc()
     generate_api_reference()
-    update_index_rst()
     html_dir = build_html_docs()
     deploy_to_gh_pages(html_dir)
 

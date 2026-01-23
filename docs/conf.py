@@ -10,8 +10,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'fairxai')))
 project = 'FairXAI'
-copyright = '2025, Kode'
-author = 'Kode'
+copyright = '2025, Kode srl'
+author = 'Kode srl'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

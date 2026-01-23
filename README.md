@@ -35,3 +35,9 @@ This command:
 * Builds the HTML documentation using Sphinx
 * Publishes the generated documentation to the gh-pages branch
 * Once the process completes, the online documentation will be automatically available at: https://kdd-lab.github.io/FAIRXAI/
+
+## Support
+
+- 📖 Documentation: [https://kdd-lab.github.io/FAIRXAI/](https://kdd-lab.github.io/FAIRXAI/)
+- 🐛 Issue Tracker: https://github.com/kdd-lab/FAIRXAI/issues
+- 💬 Discussions: Use GitHub Discussions for questions and discussions
