@@ -19,17 +19,19 @@ pip install -r requirements.txt
 
 ## Documentation
 
-The documentation is based on Sphinx. Documentation of the code is created by simply writing docstrings using reStructuredText markup. Docstrings are comments placed within triple quotes (''' or """) immediately below module, class, function, or method definitions.
+The documentation is built using Sphinx.
+Code documentation is generated automatically from docstrings written in reStructuredText (reST) format.
+Docstrings are text blocks enclosed in triple quotes (''' or """) placed immediately below module, class, function, or method definitions.
 
-The creation of online documentation the features of Sphinx. 
-To build the documentation:  
+### Updating the documentation
+To build the documentation locally, run:  
 
 ```bash
-
-cd docs
-make html
-
+python docs/generate_docs.py
 ```
-Once the documentation is built, the new folder `docs/html` must be committed and pushed to the repository and the documentation is then available here: https://kdd-lab.github.io/FAIRXAI/html/index.html
+This command:
 
-To update the online documentation, as an instance when new modules or function are added to the LORE_sa library, it is necessary to delete the old folder `docs/html`, build the documentation (see the snippet above)  and copy the greshly created `docs/_build/html` folder into `docs/`. Then, after committing and pushing the folder `docs/html`, the online documentation is updated to the last version.
+* Generates the .rst sources from the FAIRXAI codebase
+* Builds the HTML documentation using Sphinx
+* Publishes the generated documentation to the gh-pages branch
+* Once the process completes, the online documentation will be automatically available at: https://kdd-lab.github.io/FAIRXAI/

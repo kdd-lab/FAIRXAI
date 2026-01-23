@@ -71,7 +71,7 @@ def generate_apidoc():
         raise RuntimeError("Failed to run sphinx-apidoc.")
 
 
-# Step 3: Create single-page API reference
+# Step 2: Create single-page API reference
 def generate_api_reference():
     print("\n[3] Creating API reference page...")
 
@@ -90,47 +90,9 @@ def generate_api_reference():
     print(f"Created: {API_REF_FILE}")
 
 
-def ensure_additional_docs():
-    """Ensure 'usage.rst' and 'workflow.rst' exist to avoid Sphinx errors."""
-    print("\n[4] Ensuring additional .rst files are present...")
-
-    additional_files = {
-        "usage.rst": """\
-Usage
-=====
-
-This section describes how to use the FAIRXAI framework.
-
-.. note::
-   Add examples of project creation, model registration, and explanation pipeline execution here.
-""",
-        "workflow.rst": """\
-Workflow
-========
-
-This section illustrates the typical workflow for using FAIRXAI.
-
-.. note::
-   Describe the main steps:
-   1. Create a Project
-   2. Register or load a model
-   3. Run explainability pipelines
-   4. Visualize results
-"""
-    }
-
-    for filename, content in additional_files.items():
-        file_path = SOURCE_DIR / filename
-        if not file_path.exists():
-            print(f"  -> Creating missing file: {filename}")
-            file_path.write_text(content, encoding="utf-8")
-        else:
-            print(f"  -> {filename} already exists, skipping.")
-
-
-# Step 4: Update index.rst
+# Step 3: Update index.rst
 def update_index_rst():
-    print("\n[5] Updating index.rst ...")
+    print("\n[3] Updating index.rst ...")
 
     index_content = f"""
 .. {PROJECT_NAME} documentation master file
@@ -142,8 +104,6 @@ Welcome to {PROJECT_NAME}'s documentation
    :maxdepth: 2
    :caption: Contents
 
-   usage
-   workflow
    new_explainer_guide
    api_reference
    modules
@@ -161,53 +121,65 @@ Indices and tables
     print(f"Updated index file at: {INDEX_FILE}")
 
 def build_html_docs():
-    """
-    Build Sphinx HTML docs.
-
-    Strategy:
-    - If Makefile / make.bat present in DOCS_ROOT, use them.
-    - Otherwise fall back to calling sphinx-build via Python module (cross-platform).
-    """
-    # Use DOCS_ROOT and BUILD_DIR defined at top of your script
-    docs_root = DOCS_ROOT  # already defined in your script
-    source_dir = SOURCE_DIR
+    """Build Sphinx HTML documentation."""
+    print("\n[4] Building HTML docs...")
     build_html_dir = BUILD_DIR / "html"
+    build_html_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1) Try platform-native make
-    if os.name == "nt":
-        makefile = docs_root / "make.bat"
-        if makefile.exists():
-            try:
-                run_command(["cmd", "/c", "make.bat", "html"], cwd=docs_root)
-                print(f"HTML built at: {build_html_dir}")
-                return
-            except Exception as e:
-                print(f"make.bat failed: {e}")
-        else:
-            print("make.bat not found in docs root, falling back to sphinx-build.")
-    else:
-        makefile = docs_root / "Makefile"
-        if makefile.exists():
-            try:
-                run_command(["make", "html"], cwd=docs_root)
-                print(f"HTML built at: {build_html_dir}")
-                return
-            except Exception as e:
-                print(f"make html failed: {e}")
-        else:
-            print("Makefile not found in docs root, falling back to sphinx-build.")
+    cmd = [sys.executable, "-m", "sphinx", "-E", "-b", "html", str(SOURCE_DIR), str(build_html_dir)]
+    run_command(cmd)
+    print(f"HTML built at: {build_html_dir}")
+    return build_html_dir
 
-    # 2) Fallback: run sphinx-build via Python module (no make needed)
-    try:
-        # Ensure output directory exists
-        build_html_dir.mkdir(parents=True, exist_ok=True)
-        # Use sphinx-build module (works in venv)
-        cmd = [sys.executable, "-m", "sphinx", "-E", "-b","html", str(source_dir), str(DOCS_ROOT)]
-        run_command(cmd, cwd=docs_root)
-        print(f"HTML built at: {build_html_dir}")
-    except Exception as e:
-        print(f"sphinx-build fallback failed: {e}")
-        raise e
+
+# Step 5: Deploy HTML to gh-pages
+def deploy_to_gh_pages(html_dir):
+    """Deploy the built HTML docs to the gh-pages branch."""
+    print("\n[5] Deploying documentation to gh-pages...")
+
+    # Get repo URL
+    result = subprocess.run(["git", "config", "--get", "remote.origin.url"],
+                            capture_output=True, text=True)
+    repo_url = result.stdout.strip()
+    if not repo_url:
+        raise RuntimeError("Could not determine remote repository URL.")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        print("Cloning gh-pages branch...")
+        res = subprocess.run(
+            ["git", "clone", "--branch", "gh-pages", "--single-branch", repo_url, tmpdir],
+            capture_output=True, text=True
+        )
+
+        os.chdir(tmp_path)
+
+        # Clean old files (keep .git)
+        for item in tmp_path.iterdir():
+            if item.name == ".git":
+                continue
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+
+        # Copy new docs
+        print("Copying new HTML files...")
+        for item in html_dir.iterdir():
+            dest = tmp_path / item.name
+            if item.is_dir():
+                shutil.copytree(item, dest)
+            else:
+                shutil.copy2(item, dest)
+
+        # Add .nojekyll
+        (tmp_path / ".nojekyll").write_text("", encoding="utf-8")
+
+        # Commit and push
+        run_command(["git", "add", "."])
+        run_command(['git', 'commit', '-m', 'Update documentation [auto]'])
+        run_command(["git", "push", "origin", "gh-pages"])
+        print("✅ Documentation successfully deployed to gh-pages!")
 
 
 # Main
@@ -216,11 +188,11 @@ def main():
 
     generate_apidoc()
     generate_api_reference()
-    ensure_additional_docs()
     update_index_rst()
-    build_html_docs()
+    html_dir = build_html_docs()
+    deploy_to_gh_pages(html_dir)
 
-    print("\nDocumentation generation completed.")
+    print("\n✨ Documentation generation and deployment completed successfully.")
 
 
 if __name__ == "__main__":

@@ -7,8 +7,6 @@ Welcome to FAIRXAI's documentation
    :maxdepth: 2
    :caption: Contents
 
-   usage
-   workflow
    new_explainer_guide
    api_reference
    modules
