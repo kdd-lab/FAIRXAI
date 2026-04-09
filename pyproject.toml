@@ -6,7 +6,7 @@ authors = [
     { name = "KODE SRL"}
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 
 dependencies = [
     "streamlit",
@@ -48,3 +48,6 @@ docs = [
 all = [
     "fairxai[dev,docs]" # Permette di installare tutte le dipendenze con un solo comando
 ]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
